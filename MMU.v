@@ -1,53 +1,112 @@
 module MMU(
-    // ÊäÈë
-    input wire if_read, // ¶ÁÊ¹ÄÜ£¬¸ßÓÐÐ§ 
-    input wire if_write, // Ð´Ê¹ÄÜ£¬¸ßÓÐÐ§ 
-    input wire[31:0] addr, // MMUÍ¨ÓÃµØÖ· 
-    input wire[31:0] input_data, // Ð´ÈëÊý¾Ý
-    // ±£Ö¤²»Í¬Ê±¶ÁÐ´
+    input wire clk,
+    // ï¿½ï¿½ï¿½ï¿½
+    input wire if_read, // ï¿½ï¿½Ê¹ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ 
+    input wire if_write, // Ð´Ê¹ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ 
+    input wire[31:0] addr, // MMUÍ¨ï¿½Ãµï¿½Ö· 
+    input wire[31:0] input_data, // Ð´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    input wire bytemode,
+    // ï¿½ï¿½Ö¤ï¿½ï¿½Í¬Ê±ï¿½ï¿½Ð´
     
-    // Êä³ö
-    output reg[31:0] output_data, // Êä³öÊý¾Ý
+    // ï¿½ï¿½ï¿½
+    output reg[31:0] output_data, // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     
-    // top.v ½Ó¿Ú ´ýÀ©³ä
-    //BaseRAMÐÅºÅ
-    inout wire[31:0] base_ram_data,  //BaseRAMÊý¾Ý£¬µÍ8Î»ÓëCPLD´®¿Ú¿ØÖÆÆ÷¹²Ïí
-    output wire[19:0] base_ram_addr, //BaseRAMµØÖ·
-    output wire[3:0] base_ram_be_n,  //BaseRAM×Ö½ÚÊ¹ÄÜ£¬µÍÓÐÐ§¡£Èç¹û²»Ê¹ÓÃ×Ö½ÚÊ¹ÄÜ£¬Çë±£³ÖÎª0
-    output wire base_ram_ce_n,       //BaseRAMÆ¬Ñ¡£¬µÍÓÐÐ§
-    output wire base_ram_oe_n,       //BaseRAM¶ÁÊ¹ÄÜ£¬µÍÓÐÐ§
-    output wire base_ram_we_n,       //BaseRAMÐ´Ê¹ÄÜ£¬µÍÓÐÐ§
+    // top.v ï¿½Ó¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    //BaseRAMï¿½Åºï¿½
+    inout wire[31:0] base_ram_data,  //BaseRAMï¿½ï¿½ï¿½Ý£ï¿½ï¿½ï¿½8Î»ï¿½ï¿½CPLDï¿½ï¿½ï¿½Ú¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    output wire[19:0] base_ram_addr, //BaseRAMï¿½ï¿½Ö·
+    output wire[3:0] base_ram_be_n,  //BaseRAMï¿½Ö½ï¿½Ê¹ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½ï¿½Ö½ï¿½Ê¹ï¿½Ü£ï¿½ï¿½ë±£ï¿½ï¿½Îª0
+    output wire base_ram_ce_n,       //BaseRAMÆ¬Ñ¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§
+    output wire base_ram_oe_n,       //BaseRAMï¿½ï¿½Ê¹ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½Ð§
+    output wire base_ram_we_n,       //BaseRAMÐ´Ê¹ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½Ð§
 
-    //ExtRAMÐÅºÅ
-    inout wire[31:0] ext_ram_data,  //ExtRAMÊý¾Ý
-    output wire[19:0] ext_ram_addr, //ExtRAMµØÖ·
-    output wire[3:0] ext_ram_be_n,  //ExtRAM×Ö½ÚÊ¹ÄÜ£¬µÍÓÐÐ§¡£Èç¹û²»Ê¹ÓÃ×Ö½ÚÊ¹ÄÜ£¬Çë±£³ÖÎª0
-    output wire ext_ram_ce_n,       //ExtRAMÆ¬Ñ¡£¬µÍÓÐÐ§
-    output wire ext_ram_oe_n,       //ExtRAM¶ÁÊ¹ÄÜ£¬µÍÓÐÐ§
-    output wire ext_ram_we_n        //ExtRAMÐ´Ê¹ÄÜ£¬µÍÓÐÐ§
+    //ExtRAMï¿½Åºï¿½
+    inout wire[31:0] ext_ram_data,  //ExtRAMï¿½ï¿½ï¿½ï¿½
+    output wire[19:0] ext_ram_addr, //ExtRAMï¿½ï¿½Ö·
+    output wire[3:0] ext_ram_be_n,  //ExtRAMï¿½Ö½ï¿½Ê¹ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½ï¿½Ö½ï¿½Ê¹ï¿½Ü£ï¿½ï¿½ë±£ï¿½ï¿½Îª0
+    output wire ext_ram_ce_n,       //ExtRAMÆ¬Ñ¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§
+    output wire ext_ram_oe_n,       //ExtRAMï¿½ï¿½Ê¹ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½Ð§
+    output wire ext_ram_we_n        //ExtRAMÐ´Ê¹ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½Ð§
     
     // ...
     );
 
-always @(*) begin
+assign base_ram_ce_n = w_ce1;
+assign base_ram_oe_n = w_oe1;
+assign base_ram_we_n = w_we1;
+assign base_ram_addr = ram_addr;
+assign base_ram_data = ram_data;
+assign base_ram_be_n = w_be1;
+assign ext_ram_ce_n = w_ce2;
+assign ext_ram_oe_n = w_oe2;
+assign ext_ram_we_n = w_we2;
+assign ext_ram_addr = ram_addr2;
+assign ext_ram_data = ram_data2;
+assign ext_ram_be_n = w_be2;
+
+always @(clk) begin
     // W/L here
     if (if_read) begin
-        case (addr)
-        // calc fib
-        32'd000: output_data <= 32'b00100100000000010000000000000001;
-        32'd004: output_data <= 32'b00100100000000100000000000000001;
-        32'd008: output_data <= 32'b00100100000001000000000000000101;
-        32'd012: output_data <= 32'b00000000001000100000100000100001;
-        32'd016: output_data <= 32'b00000000001000100001000000100001;
-        32'd020: output_data <= 32'b00100100100001001111111111111111;
-        32'd024: output_data <= 32'b00010100100000001111111111111100;
-        32'd028: output_data <= 32'b00000000001000010000100000100001;
-        32'd032: output_data <= 32'b00000000001000010000100000100001;
-        32'd036: output_data <= 32'b00000000001000010000100000100001;
-        default: output_data <= 32'b00000000000000000000000000000000;
-        endcase
+        // for ID simulation
+        // output_data <= 32'b00100000000000010000000000000001; // ADDI $0 $1 1 --> $1=$0+1
+        if (~addr[20]) begin
+            w_ce1 <= 1'b0;
+            w_ce2 <= 1'b1;
+            w_oe1 <= 1'b0;
+            w_we1 <= 1'b1;
+            ram_addr <= addr[19:0];
+            ram_data <= 32'bz;
+            if (bytemode) begin
+                w_be1 <= 4'b1110;
+                output_data <= {{24{ram_data[7]}}, ram_data[7:0]};
+            end
+            else begin
+                w_be1 <= 4'b0000;
+                output_data <= ram_data;
+            end
+        end
+        if (addr[20]) begin
+            w_ce1 <= 1'b1;
+            w_ce2 <= 1'b0;
+            w_oe2 <= 1'b0;
+            w_we2 <= 1'b1;
+            ram_addr2 <= addr[19:0];
+            ram_data2 <= 32'bz;
+            if (bytemode) begin
+                w_be2 <= 4'b1110;
+                output_data <= {{24{ram_data2[7]}}, ram_data2[7:0]};
+            end
+            else begin
+                w_be2 <= 4'b0000;
+                output_data <= ram_data2;
+            end
+        end
     end
     if (if_write) begin
+        if (~addr[20]) begin
+            w_ce1 <= 1'b0;
+            w_ce2 <= 1'b1;
+            w_oe1 <= 1'b1;
+            w_we1 <= 1'b0;
+            if (bytemode)
+                w_be1 <= 4'b1110;
+            else
+                w_be1 <= 4'b0000;
+            ram_addr <= addr[19:0];
+            ram_data <= input_data;
+        end
+        if (addr[20]) begin
+            w_ce1 <= 1'b1;
+            w_ce2 <= 1'b0;
+            w_oe2 <= 1'b1;
+            w_we2 <= 1'b0;
+            if (bytemode)
+                w_be2 <= 4'b1110;
+            else
+                w_be2 <= 4'b0000;
+            ram_addr2 <= addr[19:0];
+            ram_data2 <= input_data;
+        end
     end
 end
     
