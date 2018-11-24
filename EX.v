@@ -1,4 +1,4 @@
-// ADD, ADDI, ADDU, ADDUI, AND, ANDI, BEQ, BGTZ, BNE, J, JAL, JR, LB, LUI, LW, OR, ORI, SB, SW, SUB, XOR, XORI
+// ADD, ADDI, ADDU, ADDUI, AND, ANDI, BEQ, BGTZ, BNE, J, JAL, JR, LB, LUI, LW, OR, ORI, SB, SLL, SRL, SW, SUB, XOR, XORI
 
 module EX(
     input wire[5:0] op,
@@ -105,6 +105,24 @@ always @(*) begin
             6'b100110: begin
             // XOR
                 result <= data_a ^ data_b;
+                bubble_cnt <= bubble_cnt_dec;
+                ex_stopcnt <= ex_stopcnt_dec;
+                if_forward_reg_write <= ~ex_stop;
+                if_pc_jump <= 1'b0;
+            end
+            
+            6'b000000: begin
+            // SLL
+                result <= data_b << imm[10:6];
+                bubble_cnt <= bubble_cnt_dec;
+                ex_stopcnt <= ex_stopcnt_dec;
+                if_forward_reg_write <= ~ex_stop;
+                if_pc_jump <= 1'b0;
+            end
+            
+            6'b000010: begin
+            // SRL
+                result <= data_b >> imm[10:6];
                 bubble_cnt <= bubble_cnt_dec;
                 ex_stopcnt <= ex_stopcnt_dec;
                 if_forward_reg_write <= ~ex_stop;

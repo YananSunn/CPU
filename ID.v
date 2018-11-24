@@ -71,6 +71,27 @@ always@(*) begin
             if_mem_write <= 1'b0;
             data_write_reg <= ins[20:16];
         end
+        6'b001100: begin
+        // ANDI
+            if_reg_write <= 1'b0; // 在旁路单元中写回
+            if_mem_read <= 1'b0;
+            if_mem_write <= 1'b0;
+            data_write_reg <= ins[20:16];
+        end
+        6'b001101: begin
+        // ORI
+            if_reg_write <= 1'b0; // 在旁路单元中写回
+            if_mem_read <= 1'b0;
+            if_mem_write <= 1'b0;
+            data_write_reg <= ins[20:16];
+        end
+        6'b001110: begin
+        // XORI
+            if_reg_write <= 1'b0; // 在旁路单元中写回
+            if_mem_read <= 1'b0;
+            if_mem_write <= 1'b0;
+            data_write_reg <= ins[20:16];
+        end
         6'b001111: begin
         // LIU
             if_reg_write <= 1'b0; // 在旁路单元中写回
