@@ -116,7 +116,13 @@ always@(*) begin
             if_mem_read <= 1'b0;
             if_mem_write <= 1'b1;
         end
-                
+        6'b101000: begin
+        // SB
+            if_reg_write <= 1'b0;
+            if_mem_read <= 1'b0;
+            if_mem_write <= 1'b1;
+        end
+        
         // JÐÍ
         6'b000010: begin
         // J

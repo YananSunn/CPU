@@ -1,4 +1,4 @@
-// ADD, ADDI, ADDU, ADDUI, BEQ, BGTZ, BNE, J, JAL, JR, LB, LUI, LW, SB, SW, SUB
+// ADD, ADDI, ADDU, ADDUI, AND, ANDI, BEQ, BGTZ, BNE, J, JAL, JR, LB, LUI, LW, OR, ORI, SB, SW, SUB, XOR, XORI
 
 module EX(
     input wire[5:0] op,
@@ -84,6 +84,33 @@ always @(*) begin
                 if_pc_jump <= 1'b0;
             end
             
+            6'b100100: begin
+            // AND
+                result <= data_a & data_b;
+                bubble_cnt <= bubble_cnt_dec;
+                ex_stopcnt <= ex_stopcnt_dec;
+                if_forward_reg_write <= ~ex_stop;
+                if_pc_jump <= 1'b0;
+            end
+            
+            6'b100101: begin
+            // OR
+                result <= data_a | data_b;
+                bubble_cnt <= bubble_cnt_dec;
+                ex_stopcnt <= ex_stopcnt_dec;
+                if_forward_reg_write <= ~ex_stop;
+                if_pc_jump <= 1'b0;
+            end
+            
+            6'b100110: begin
+            // XOR
+                result <= data_a ^ data_b;
+                bubble_cnt <= bubble_cnt_dec;
+                ex_stopcnt <= ex_stopcnt_dec;
+                if_forward_reg_write <= ~ex_stop;
+                if_pc_jump <= 1'b0;
+            end
+            
             6'b001000: begin
             // JR
                 bubble_cnt <= bubble_cnt_dec;
@@ -120,6 +147,33 @@ always @(*) begin
             ex_stopcnt <= ex_stopcnt_dec;
             if_pc_jump <= 1'b0;
             result <= data_a + imm;
+            if_forward_reg_write <= ~ex_stop;
+        end
+        
+        6'b001100: begin
+            // ANDI
+            bubble_cnt <= bubble_cnt_dec;
+            ex_stopcnt <= ex_stopcnt_dec;
+            if_pc_jump <= 1'b0;
+            result <= data_a & imm;
+            if_forward_reg_write <= ~ex_stop;
+        end
+        
+        6'b001101: begin
+            // ORI
+            bubble_cnt <= bubble_cnt_dec;
+            ex_stopcnt <= ex_stopcnt_dec;
+            if_pc_jump <= 1'b0;
+            result <= data_a | imm;
+            if_forward_reg_write <= ~ex_stop;
+        end
+        
+        6'b001110: begin
+            // XORI
+            bubble_cnt <= bubble_cnt_dec;
+            ex_stopcnt <= ex_stopcnt_dec;
+            if_pc_jump <= 1'b0;
+            result <= data_a ^ imm;
             if_forward_reg_write <= ~ex_stop;
         end
         
