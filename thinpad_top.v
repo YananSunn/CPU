@@ -1,57 +1,57 @@
 `default_nettype none
 module thinpad_top(
-    input wire clk_50M,           //50MHz Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-    input wire clk_11M0592,       //11.0592MHz Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    input wire clk_50M,           //50MHz Ê±ÖÓÊäÈë
+    input wire clk_11M0592,       //11.0592MHz Ê±ÖÓÊäÈë
 
-    input wire clock_btn,         //BTN5ï¿½Ö¶ï¿½Ê±ï¿½Ó°ï¿½Å¥ï¿½ï¿½ï¿½Ø£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±Îª1
-    input wire reset_btn,         //BTN6ï¿½Ö¶ï¿½ï¿½ï¿½Î»ï¿½ï¿½Å¥ï¿½ï¿½ï¿½Ø£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±Îª1
+    input wire clock_btn,         //BTN5ÊÖ¶¯Ê±ÖÓ°´Å¥¿ª¹Ø£¬´øÏû¶¶µçÂ·£¬°´ÏÂÊ±Îª1
+    input wire reset_btn,         //BTN6ÊÖ¶¯¸´Î»°´Å¥¿ª¹Ø£¬´øÏû¶¶µçÂ·£¬°´ÏÂÊ±Îª1
 
-    input  wire[3:0]  touch_btn,  //BTN1~BTN4ï¿½ï¿½ï¿½ï¿½Å¥ï¿½ï¿½ï¿½Ø£ï¿½ï¿½ï¿½ï¿½ï¿½Ê±Îª1
-    input  wire[31:0] dip_sw,     //32Î»ï¿½ï¿½ï¿½ë¿ªï¿½Ø£ï¿½ï¿½ï¿½ï¿½ï¿½"ON"Ê±Îª1
-    output wire[15:0] leds,       //16Î»LEDï¿½ï¿½ï¿½ï¿½ï¿½Ê±1ï¿½ï¿½ï¿½ï¿½
-    output wire[7:0]  dpy0,       //ï¿½ï¿½ï¿½ï¿½Üµï¿½Î»ï¿½ÅºÅ£ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡ï¿½ï¿½ï¿½ã£¬ï¿½ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½
-    output wire[7:0]  dpy1,       //ï¿½ï¿½ï¿½ï¿½Ü¸ï¿½Î»ï¿½ÅºÅ£ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡ï¿½ï¿½ï¿½ã£¬ï¿½ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½
+    input  wire[3:0]  touch_btn,  //BTN1~BTN4£¬°´Å¥¿ª¹Ø£¬°´ÏÂÊ±Îª1
+    input  wire[31:0] dip_sw,     //32Î»²¦Âë¿ª¹Ø£¬²¦µ½"ON"Ê±Îª1
+    output wire[15:0] leds,       //16Î»LED£¬Êä³öÊ±1µãÁÁ
+    output wire[7:0]  dpy0,       //ÊýÂë¹ÜµÍÎ»ÐÅºÅ£¬°üÀ¨Ð¡Êýµã£¬Êä³ö1µãÁÁ
+    output wire[7:0]  dpy1,       //ÊýÂë¹Ü¸ßÎ»ÐÅºÅ£¬°üÀ¨Ð¡Êýµã£¬Êä³ö1µãÁÁ
 
-    //CPLDï¿½ï¿½ï¿½Ú¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Åºï¿½
-    output wire uart_rdn,         //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÅºÅ£ï¿½ï¿½ï¿½ï¿½ï¿½Ð§
-    output wire uart_wrn,         //Ð´ï¿½ï¿½ï¿½ï¿½ï¿½ÅºÅ£ï¿½ï¿½ï¿½ï¿½ï¿½Ð§
-    input wire uart_dataready,    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×¼ï¿½ï¿½ï¿½ï¿½
-    input wire uart_tbre,         //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý±ï¿½Ö¾
-    input wire uart_tsre,         //ï¿½ï¿½ï¿½Ý·ï¿½ï¿½ï¿½ï¿½ï¿½Ï±ï¿½Ö¾
+    //CPLD´®¿Ú¿ØÖÆÆ÷ÐÅºÅ
+    output wire uart_rdn,         //¶Á´®¿ÚÐÅºÅ£¬µÍÓÐÐ§
+    output wire uart_wrn,         //Ð´´®¿ÚÐÅºÅ£¬µÍÓÐÐ§
+    input wire uart_dataready,    //´®¿ÚÊý¾Ý×¼±¸ºÃ
+    input wire uart_tbre,         //·¢ËÍÊý¾Ý±êÖ¾
+    input wire uart_tsre,         //Êý¾Ý·¢ËÍÍê±Ï±êÖ¾
 
-    //BaseRAMï¿½Åºï¿½
-    inout wire[31:0] base_ram_data,  //BaseRAMï¿½ï¿½ï¿½Ý£ï¿½ï¿½ï¿½8Î»ï¿½ï¿½CPLDï¿½ï¿½ï¿½Ú¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-    output wire[19:0] base_ram_addr, //BaseRAMï¿½ï¿½Ö·
-    output wire[3:0] base_ram_be_n,  //BaseRAMï¿½Ö½ï¿½Ê¹ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½ï¿½Ö½ï¿½Ê¹ï¿½Ü£ï¿½ï¿½ë±£ï¿½ï¿½Îª0
-    output wire base_ram_ce_n,       //BaseRAMÆ¬Ñ¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§
-    output wire base_ram_oe_n,       //BaseRAMï¿½ï¿½Ê¹ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½Ð§
-    output wire base_ram_we_n,       //BaseRAMÐ´Ê¹ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½Ð§
+    //BaseRAMÐÅºÅ
+    inout wire[31:0] base_ram_data,  //BaseRAMÊý¾Ý£¬µÍ8Î»ÓëCPLD´®¿Ú¿ØÖÆÆ÷¹²Ïí
+    output wire[19:0] base_ram_addr, //BaseRAMµØÖ·
+    output wire[3:0] base_ram_be_n,  //BaseRAM×Ö½ÚÊ¹ÄÜ£¬µÍÓÐÐ§¡£Èç¹û²»Ê¹ÓÃ×Ö½ÚÊ¹ÄÜ£¬Çë±£³ÖÎª0
+    output wire base_ram_ce_n,       //BaseRAMÆ¬Ñ¡£¬µÍÓÐÐ§
+    output wire base_ram_oe_n,       //BaseRAM¶ÁÊ¹ÄÜ£¬µÍÓÐÐ§
+    output wire base_ram_we_n,       //BaseRAMÐ´Ê¹ÄÜ£¬µÍÓÐÐ§
 
-    //ExtRAMï¿½Åºï¿½
-    inout wire[31:0] ext_ram_data,  //ExtRAMï¿½ï¿½ï¿½ï¿½
-    output wire[19:0] ext_ram_addr, //ExtRAMï¿½ï¿½Ö·
-    output wire[3:0] ext_ram_be_n,  //ExtRAMï¿½Ö½ï¿½Ê¹ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½ï¿½Ö½ï¿½Ê¹ï¿½Ü£ï¿½ï¿½ë±£ï¿½ï¿½Îª0
-    output wire ext_ram_ce_n,       //ExtRAMÆ¬Ñ¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§
-    output wire ext_ram_oe_n,       //ExtRAMï¿½ï¿½Ê¹ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½Ð§
-    output wire ext_ram_we_n,       //ExtRAMÐ´Ê¹ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½Ð§
+    //ExtRAMÐÅºÅ
+    inout wire[31:0] ext_ram_data,  //ExtRAMÊý¾Ý
+    output wire[19:0] ext_ram_addr, //ExtRAMµØÖ·
+    output wire[3:0] ext_ram_be_n,  //ExtRAM×Ö½ÚÊ¹ÄÜ£¬µÍÓÐÐ§¡£Èç¹û²»Ê¹ÓÃ×Ö½ÚÊ¹ÄÜ£¬Çë±£³ÖÎª0
+    output wire ext_ram_ce_n,       //ExtRAMÆ¬Ñ¡£¬µÍÓÐÐ§
+    output wire ext_ram_oe_n,       //ExtRAM¶ÁÊ¹ÄÜ£¬µÍÓÐÐ§
+    output wire ext_ram_we_n,       //ExtRAMÐ´Ê¹ÄÜ£¬µÍÓÐÐ§
 
-    //Ö±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Åºï¿½
-    output wire txd,  //Ö±ï¿½ï¿½ï¿½ï¿½ï¿½Ú·ï¿½ï¿½Í¶ï¿½
-    input  wire rxd,  //Ö±ï¿½ï¿½ï¿½ï¿½ï¿½Ú½ï¿½ï¿½Õ¶ï¿½
+    //Ö±Á¬´®¿ÚÐÅºÅ
+    output wire txd,  //Ö±Á¬´®¿Ú·¢ËÍ¶Ë
+    input  wire rxd,  //Ö±Á¬´®¿Ú½ÓÊÕ¶Ë
 
-    //Flashï¿½æ´¢ï¿½ï¿½ï¿½ÅºÅ£ï¿½ï¿½Î¿ï¿½ JS28F640 Ð¾Æ¬ï¿½Ö²ï¿½
-    output wire [22:0]flash_a,      //Flashï¿½ï¿½Ö·ï¿½ï¿½a0ï¿½ï¿½ï¿½ï¿½8bitÄ£Ê½ï¿½ï¿½Ð§ï¿½ï¿½16bitÄ£Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-    inout  wire [15:0]flash_d,      //Flashï¿½ï¿½ï¿½ï¿½
-    output wire flash_rp_n,         //Flashï¿½ï¿½Î»ï¿½ÅºÅ£ï¿½ï¿½ï¿½ï¿½ï¿½Ð§
-    output wire flash_vpen,         //FlashÐ´ï¿½ï¿½ï¿½ï¿½ï¿½ÅºÅ£ï¿½ï¿½Íµï¿½Æ½Ê±ï¿½ï¿½ï¿½Ü²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð´
-    output wire flash_ce_n,         //FlashÆ¬Ñ¡ï¿½ÅºÅ£ï¿½ï¿½ï¿½ï¿½ï¿½Ð§
-    output wire flash_oe_n,         //Flashï¿½ï¿½Ê¹ï¿½ï¿½ï¿½ÅºÅ£ï¿½ï¿½ï¿½ï¿½ï¿½Ð§
-    output wire flash_we_n,         //FlashÐ´Ê¹ï¿½ï¿½ï¿½ÅºÅ£ï¿½ï¿½ï¿½ï¿½ï¿½Ð§
-    output wire flash_byte_n,       //Flash 8bitÄ£Ê½Ñ¡ï¿½ñ£¬µï¿½ï¿½ï¿½Ð§ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½flashï¿½ï¿½16Î»Ä£Ê½Ê±ï¿½ï¿½ï¿½ï¿½Îª1
+    //Flash´æ´¢Æ÷ÐÅºÅ£¬²Î¿¼ JS28F640 Ð¾Æ¬ÊÖ²á
+    output wire [22:0]flash_a,      //FlashµØÖ·£¬a0½öÔÚ8bitÄ£Ê½ÓÐÐ§£¬16bitÄ£Ê½ÎÞÒâÒå
+    inout  wire [15:0]flash_d,      //FlashÊý¾Ý
+    output wire flash_rp_n,         //Flash¸´Î»ÐÅºÅ£¬µÍÓÐÐ§
+    output wire flash_vpen,         //FlashÐ´±£»¤ÐÅºÅ£¬µÍµçÆ½Ê±²»ÄÜ²Á³ý¡¢ÉÕÐ´
+    output wire flash_ce_n,         //FlashÆ¬Ñ¡ÐÅºÅ£¬µÍÓÐÐ§
+    output wire flash_oe_n,         //Flash¶ÁÊ¹ÄÜÐÅºÅ£¬µÍÓÐÐ§
+    output wire flash_we_n,         //FlashÐ´Ê¹ÄÜÐÅºÅ£¬µÍÓÐÐ§
+    output wire flash_byte_n,       //Flash 8bitÄ£Ê½Ñ¡Ôñ£¬µÍÓÐÐ§¡£ÔÚÊ¹ÓÃflashµÄ16Î»Ä£Ê½Ê±ÇëÉèÎª1
 
-    //USB ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÅºÅ£ï¿½ï¿½Î¿ï¿½ SL811 Ð¾Æ¬ï¿½Ö²ï¿½
+    //USB ¿ØÖÆÆ÷ÐÅºÅ£¬²Î¿¼ SL811 Ð¾Æ¬ÊÖ²á
     output wire sl811_a0,
-    //inout  wire[7:0] sl811_d,     //USBï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½dm9k_sd[7:0]ï¿½ï¿½ï¿½ï¿½
+    //inout  wire[7:0] sl811_d,     //USBÊý¾ÝÏßÓëÍøÂç¿ØÖÆÆ÷µÄdm9k_sd[7:0]¹²Ïí
     output wire sl811_wr_n,
     output wire sl811_rd_n,
     output wire sl811_cs_n,
@@ -60,7 +60,7 @@ module thinpad_top(
     input  wire sl811_intrq,
     input  wire sl811_drq_n,
 
-    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÅºÅ£ï¿½ï¿½Î¿ï¿½ DM9000A Ð¾Æ¬ï¿½Ö²ï¿½
+    //ÍøÂç¿ØÖÆÆ÷ÐÅºÅ£¬²Î¿¼ DM9000A Ð¾Æ¬ÊÖ²á
     output wire dm9k_cmd,
     inout  wire[15:0] dm9k_sd,
     output wire dm9k_iow_n,
@@ -69,41 +69,41 @@ module thinpad_top(
     output wire dm9k_pwrst_n,
     input  wire dm9k_int,
 
-    //Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Åºï¿½
-    output wire[2:0] video_red,    //ï¿½ï¿½É«ï¿½ï¿½ï¿½Ø£ï¿½3Î»
-    output wire[2:0] video_green,  //ï¿½ï¿½É«ï¿½ï¿½ï¿½Ø£ï¿½3Î»
-    output wire[1:0] video_blue,   //ï¿½ï¿½É«ï¿½ï¿½ï¿½Ø£ï¿½2Î»
-    output wire video_hsync,       //ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½Ë®Æ½Í¬ï¿½ï¿½ï¿½ï¿½ï¿½Åºï¿½
-    output wire video_vsync,       //ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö±Í¬ï¿½ï¿½ï¿½ï¿½ï¿½Åºï¿½
-    output wire video_clk,         //ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½
-    output wire video_de           //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ÅºÅ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    //Í¼ÏñÊä³öÐÅºÅ
+    output wire[2:0] video_red,    //ºìÉ«ÏñËØ£¬3Î»
+    output wire[2:0] video_green,  //ÂÌÉ«ÏñËØ£¬3Î»
+    output wire[1:0] video_blue,   //À¶É«ÏñËØ£¬2Î»
+    output wire video_hsync,       //ÐÐÍ¬²½£¨Ë®Æ½Í¬²½£©ÐÅºÅ
+    output wire video_vsync,       //³¡Í¬²½£¨´¹Ö±Í¬²½£©ÐÅºÅ
+    output wire video_clk,         //ÏñËØÊ±ÖÓÊä³ö
+    output wire video_de           //ÐÐÊý¾ÝÓÐÐ§ÐÅºÅ£¬ÓÃÓÚÇø·ÖÏûÒþÇø
 );
 
 wire clk, rst;
 assign clk = clock_btn;
 assign rst = reset_btn;
 
-// MMU ï¿½Åºï¿½
+// MMU ÐÅºÅ
 wire mmu_read_wire, mmu_write_wire;
 wire[31:0] mmu_addr_wire, mmu_out_data, mmu_in_data;
-reg [31:0] mmu_addr; // MMUï¿½ï¿½Ö·/ï¿½ï¿½ï¿½ï¿½
+reg [31:0] mmu_addr; // MMUµØÖ·/Êý¾Ý
 
-// ï¿½ï¿½ï¿½ò´«µï¿½ï¿½Åºï¿½
+// ·´Ïò´«µÝÐÅºÅ
 wire ex_ifid_bubble, ex_idex_bubble, ex_if_ifpcjump;
 wire[2:0] ex_ex_i_bubblecnt         , ex_ex_i_stopcnt         ;
 reg [2:0] ex_ex_o_bubblecnt = 3'b000, ex_ex_o_stopcnt = 3'b011; // stop the inital commands
 wire[31:0] ex_if_pcjumpto;
 
-// ï¿½ï¿½Â·ï¿½Åºï¿½
+// ÅÔÂ·ÐÅºÅ
 wire ex_id_f_ifregwrite;
 wire id_ifregwrite;
 wire[4:0] id_regwrite;
 wire[31:0] id_regdata;
 
-// IF/ID ï¿½Åºï¿½
+// IF/ID ÐÅºÅ
 wire[31:0] if_id_i_ins, if_id_i_npc;
 reg[31:0]  if_id_o_ins, if_id_o_npc;
-// IM ï¿½Åºï¿½
+// IM ÐÅºÅ
 wire[31:0] if_imdata, if_imaddr;
 
 IF if_instance(
@@ -130,7 +130,7 @@ always@(posedge clk) begin
     end
 end
 
-// ID/EX ï¿½Åºï¿½
+// ID/EX ÐÅºÅ
 wire id_ex_i_ifregwrite    , id_ex_i_ifmemread    , id_ex_i_ifmemwrite    ;
 reg  id_ex_o_ifregwrite = 0, id_ex_o_ifmemread = 0, id_ex_o_ifmemwrite = 0;
 wire[5:0] id_ex_i_op, id_ex_i_func;
@@ -196,7 +196,7 @@ always@(posedge clk) begin
     end
 end
 
-// EX/MEM ï¿½Åºï¿½
+// EX/MEM ÐÅºÅ
 wire ex_mem_i_ifregwrite    , ex_mem_i_ifmemread    , ex_mem_i_ifmemwrite    , ex_mem_i_loadbyte;
 reg  ex_mem_o_ifregwrite = 0, ex_mem_o_ifmemread = 0, ex_mem_o_ifmemwrite = 0, ex_mem_o_loadbyte;
 wire[4:0] ex_mem_i_regwrite;
@@ -257,7 +257,7 @@ always@(posedge clk) begin
     ex_mem_o_memwrite <= ex_mem_i_memwrite;
 end
 
-// MEM/WB ï¿½Åºï¿½
+// MEM/WB ÐÅºÅ
 wire mem_wb_i_ifregwrite, mem_wb_i_ifmemread;
 wire[4:0] mem_wb_i_regwrite;
 wire[31:0] mem_wb_i_res, mem_wb_i_memread;

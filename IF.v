@@ -14,7 +14,7 @@ module IF(
     input wire[31:0] im_data,
     output reg[31:0] im_addr = 32'hFFFFFFFF,
     
-    output reg[31:0] npc = 32'd0,
+    output reg[31:0] npc = 32'h80000000, // pc_inital
     output wire[31:0] ins
     );
 
