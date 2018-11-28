@@ -22,7 +22,10 @@ module IF(
 assign ins = im_data;
 
 always @(posedge clk) begin
-    if (!if_bubble) begin
+    if (!rst) begin
+        npc <= 32'h80000000;
+    end
+    else if (!if_bubble) begin
         if (if_pc_jump) begin
             `pc <= jpc;
             npc <= jpc + 32'd4;

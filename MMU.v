@@ -5,7 +5,7 @@ module MMU(
     input wire if_read, // 读使能，高有效 
     input wire if_write, // 写使能，高有效 
     input wire[31:0] addr, // MMU通用地址 
-    input wire[31:0] input_data, // 写入数据
+    input wire[31:0] input_data, // 写入数据 
     input wire bytemode,
     // 保证不同时读写
     
@@ -58,6 +58,14 @@ assign uart_wrn     = wrn;
 assign uart_rdn     = rdn;
 
 always @(posedge clk or negedge clk) begin
+/*
+    if (((addr & 32'h80000000)!=0) & if_read) begin
+        case (addr)
+            32'h80000000: output_data <= 32'b00000000000000000000000000000000;
+            
+        endcase
+    end else
+*/
     if (clk) begin
         // W/L here
         if (if_read) begin
@@ -72,12 +80,12 @@ always @(posedge clk or negedge clk) begin
                 end
             end
             else begin
-                if (~addr[20]) begin
+                if (~addr[22]) begin
                     w_ce1 <= 1'b0;
                     w_ce2 <= 1'b1;
                     w_oe1 <= 1'b0;
                     w_we1 <= 1'b1;
-                    ram_addr <= addr[19:0];
+                    ram_addr <= addr[21:2];
                     ram_data <= 32'bz;
                     if (bytemode) begin
                         w_be1 <= 4'b1110;
@@ -88,12 +96,12 @@ always @(posedge clk or negedge clk) begin
                         output_data <= ram_data;
                     end
                 end
-                if (addr[20]) begin
+                else begin
                     w_ce1 <= 1'b1;
                     w_ce2 <= 1'b0;
                     w_oe2 <= 1'b0;
                     w_we2 <= 1'b1;
-                    ram_addr2 <= addr[19:0];
+                    ram_addr2 <= addr[21:2];
                     ram_data2 <= 32'bz;
                     if (bytemode) begin
                         w_be2 <= 4'b1110;
@@ -106,13 +114,13 @@ always @(posedge clk or negedge clk) begin
                 end
             end
         end
-        if (if_write) begin
+        else if (if_write) begin
             if (addr[29]) begin
                 wrn <= 1'b0;
                 ram_data <= input_data;
             end
             else begin
-                if (~addr[20]) begin
+                if (~addr[22]) begin
                     w_ce1 <= 1'b0;
                     w_ce2 <= 1'b1;
                     w_oe1 <= 1'b1;
@@ -121,10 +129,10 @@ always @(posedge clk or negedge clk) begin
                         w_be1 <= 4'b1110;
                     else
                         w_be1 <= 4'b0000;
-                    ram_addr <= addr[19:0];
+                    ram_addr <= addr[21:2];
                     ram_data <= input_data;
                 end
-                if (addr[20]) begin
+                else begin
                     w_ce1 <= 1'b1;
                     w_ce2 <= 1'b0;
                     w_oe2 <= 1'b1;
@@ -133,7 +141,7 @@ always @(posedge clk or negedge clk) begin
                         w_be2 <= 4'b1110;
                     else
                         w_be2 <= 4'b0000;
-                    ram_addr2 <= addr[19:0];
+                    ram_addr2 <= addr[21:2];
                     ram_data2 <= input_data;
                 end
             end

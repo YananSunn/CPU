@@ -80,7 +80,7 @@ module thinpad_top(
 );
 
 wire clk, rst;
-assign clk = clock_btn;
+assign clk = clk_11M0592;
 assign rst = reset_btn;
 
 // MMU пе╨е
@@ -174,25 +174,34 @@ assign ex_ifid_bubble = (ex_ex_i_bubblecnt != 0);
 
 // ID/EX registers
 always@(posedge clk) begin
-    ex_ex_o_bubblecnt <= ex_ex_i_bubblecnt;
-    ex_ex_o_stopcnt <= ex_ex_i_stopcnt;
-
-    if (!ex_idex_bubble) begin
-        id_ex_exstop <= (ex_ex_i_stopcnt != 0);
-        id_ex_o_npc <= id_ex_i_npc;
-        id_ex_o_ifregwrite <= id_ex_i_ifregwrite;
-        id_ex_o_ifmemread <= id_ex_i_ifmemread;
-        id_ex_o_ifmemwrite <= id_ex_i_ifmemwrite;
-        id_ex_o_op <= id_ex_i_op;
-        id_ex_o_func <= id_ex_i_func;
-        id_ex_o_regwrite <= id_ex_i_regwrite;
-        id_ex_o_data1 <= id_ex_i_data1;
-        id_ex_o_data2 <= id_ex_i_data2;
-        id_ex_o_data2imm <= id_ex_i_data2imm;
-        id_ex_o_jpc <= id_ex_i_jpc;
+    if (!rst) begin
+        id_ex_o_ifregwrite <= 0;
+        id_ex_o_ifmemread <= 0;
+        id_ex_o_ifmemwrite <= 0;
+        ex_ex_o_bubblecnt <= 3'b000;
+        ex_ex_o_stopcnt <= 3'b011;
     end
     else begin
-        id_ex_exstop <= 1'b1;
+        ex_ex_o_bubblecnt <= ex_ex_i_bubblecnt;
+        ex_ex_o_stopcnt <= ex_ex_i_stopcnt;
+    
+        if (!ex_idex_bubble) begin
+            id_ex_exstop <= (ex_ex_i_stopcnt != 0);
+            id_ex_o_npc <= id_ex_i_npc;
+            id_ex_o_ifregwrite <= id_ex_i_ifregwrite;
+            id_ex_o_ifmemread <= id_ex_i_ifmemread;
+            id_ex_o_ifmemwrite <= id_ex_i_ifmemwrite;
+            id_ex_o_op <= id_ex_i_op;
+            id_ex_o_func <= id_ex_i_func;
+            id_ex_o_regwrite <= id_ex_i_regwrite;
+            id_ex_o_data1 <= id_ex_i_data1;
+            id_ex_o_data2 <= id_ex_i_data2;
+            id_ex_o_data2imm <= id_ex_i_data2imm;
+            id_ex_o_jpc <= id_ex_i_jpc;
+        end
+        else begin
+            id_ex_exstop <= 1'b1;
+        end
     end
 end
 
@@ -248,13 +257,20 @@ EX ex_instance(
 
 // EX/MEM registers
 always@(posedge clk) begin
-    ex_mem_o_ifregwrite <= ex_mem_i_ifregwrite;
-    ex_mem_o_ifmemread <= ex_mem_i_ifmemread;
-    ex_mem_o_ifmemwrite <= ex_mem_i_ifmemwrite;
-    ex_mem_o_regwrite <= ex_mem_i_regwrite;
-    ex_mem_o_res <= ex_mem_i_res;
-    ex_mem_o_loadbyte <= ex_mem_i_loadbyte;
-    ex_mem_o_memwrite <= ex_mem_i_memwrite;
+    if (!rst) begin
+        ex_mem_o_ifregwrite <= 0;
+        ex_mem_o_ifmemread <= 0;
+        ex_mem_o_ifmemwrite <= 0;
+    end
+    else begin
+        ex_mem_o_ifregwrite <= ex_mem_i_ifregwrite;
+        ex_mem_o_ifmemread <= ex_mem_i_ifmemread;
+        ex_mem_o_ifmemwrite <= ex_mem_i_ifmemwrite;
+        ex_mem_o_regwrite <= ex_mem_i_regwrite;
+        ex_mem_o_res <= ex_mem_i_res;
+        ex_mem_o_loadbyte <= ex_mem_i_loadbyte;
+        ex_mem_o_memwrite <= ex_mem_i_memwrite;
+    end
 end
 
 // MEM/WB пе╨е
@@ -296,7 +312,7 @@ assign mmu_in_data = ex_mem_o_memwrite;
 
 // MMU
 MMU mmu_instance(
-    .clk(clk_50M),
+    .clk(clk),
     .if_read(mmu_read_wire),
     .if_write(mmu_write_wire),
     .addr(mmu_addr_wire),
