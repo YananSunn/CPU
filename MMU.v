@@ -8,14 +8,14 @@ module MMU(
     input wire bytemode,
     // ��֤��ͬʱ��д
     
-    // ���
-    output reg[31:0] output_data, // �������
+    // ���?
+    output reg[31:0] output_data, // �������?
     
     // top.v �ӿ� ������
     //BaseRAM�ź�
     inout wire[31:0] base_ram_data,  //BaseRAM���ݣ���8λ��CPLD���ڿ���������
     output wire[19:0] base_ram_addr, //BaseRAM��ַ
-    output wire[3:0] base_ram_be_n,  //BaseRAM�ֽ�ʹ�ܣ�����Ч�������ʹ���ֽ�ʹ�ܣ��뱣��Ϊ0
+    output wire[3:0] base_ram_be_n,  //BaseRAM�ֽ�ʹ�ܣ�����Ч�������ʹ���ֽ�ʹ�ܣ��뱣���?0
     output wire base_ram_ce_n,       //BaseRAMƬѡ������Ч
     output wire base_ram_oe_n,       //BaseRAM��ʹ�ܣ�����Ч
     output wire base_ram_we_n,       //BaseRAMдʹ�ܣ�����Ч
@@ -23,13 +23,18 @@ module MMU(
     //ExtRAM�ź�
     inout wire[31:0] ext_ram_data,  //ExtRAM����
     output wire[19:0] ext_ram_addr, //ExtRAM��ַ
-    output wire[3:0] ext_ram_be_n,  //ExtRAM�ֽ�ʹ�ܣ�����Ч�������ʹ���ֽ�ʹ�ܣ��뱣��Ϊ0
+    output wire[3:0] ext_ram_be_n,  //ExtRAM�ֽ�ʹ�ܣ�����Ч�������ʹ���ֽ�ʹ�ܣ��뱣���?0
     output wire ext_ram_ce_n,       //ExtRAMƬѡ������Ч
     output wire ext_ram_oe_n,       //ExtRAM��ʹ�ܣ�����Ч
     output wire ext_ram_we_n        //ExtRAMдʹ�ܣ�����Ч
     
     // ...
     );
+
+reg w_oe1, w_we1, w_ce1, w_be1;
+reg w_oe2, w_we2, w_ce2, w_be2;
+reg[19:0] ram_addr, ram_addr2;
+reg[31:0] ram_data, ram_data2;
 
 assign base_ram_ce_n = w_ce1;
 assign base_ram_oe_n = w_oe1;
