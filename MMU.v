@@ -32,8 +32,8 @@ module MMU(
     // ...
     );
 
-reg w_oe1, w_we1, w_ce1, w_be1;
-reg w_oe2, w_we2, w_ce2, w_be2;
+reg w_oe1 = 1'b1, w_we1 = 1'b1, w_ce1 = 1'b1, w_be1;
+reg w_oe2 = 1'b1, w_we2 = 1'b1, w_ce2 = 1'b1, w_be2;
 reg[19:0] ram_addr, ram_addr2;
 reg[31:0] ram_data, ram_data2;
 
@@ -50,68 +50,78 @@ assign ext_ram_addr = ram_addr2;
 assign ext_ram_data = ram_data2;
 assign ext_ram_be_n = w_be2;
 
-always @(clk) begin
-    // W/L here
-    if (if_read) begin
-        if (~addr[20]) begin
-            w_ce1 <= 1'b0;
-            w_ce2 <= 1'b1;
-            w_oe1 <= 1'b0;
-            w_we1 <= 1'b1;
-            ram_addr <= addr[19:0];
-            ram_data <= 32'bz;
-            if (bytemode) begin
-                w_be1 <= 4'b1110;
-                output_data <= {{24{ram_data[7]}}, ram_data[7:0]};
+always @(posedge clk or negedge clk) begin
+    if (clk) begin
+        // W/L here
+        if (if_read) begin
+            if (~addr[20]) begin
+                w_ce1 <= 1'b0;
+                w_ce2 <= 1'b1;
+                w_oe1 <= 1'b0;
+                w_we1 <= 1'b1;
+                ram_addr <= addr[19:0];
+                ram_data <= 32'bz;
+                if (bytemode) begin
+                    w_be1 <= 4'b1110;
+                    output_data <= {{24{ram_data[7]}}, ram_data[7:0]};
+                end
+                else begin
+                    w_be1 <= 4'b0000;
+                    output_data <= ram_data;
+                end
             end
-            else begin
-                w_be1 <= 4'b0000;
-                output_data <= ram_data;
+            if (addr[20]) begin
+                w_ce1 <= 1'b1;
+                w_ce2 <= 1'b0;
+                w_oe2 <= 1'b0;
+                w_we2 <= 1'b1;
+                ram_addr2 <= addr[19:0];
+                ram_data2 <= 32'bz;
+                if (bytemode) begin
+                    w_be2 <= 4'b1110;
+                    output_data <= {{24{ram_data2[7]}}, ram_data2[7:0]};
+                end
+                else begin
+                    w_be2 <= 4'b0000;
+                    output_data <= ram_data2;
+                end
             end
         end
-        if (addr[20]) begin
-            w_ce1 <= 1'b1;
-            w_ce2 <= 1'b0;
-            w_oe2 <= 1'b0;
-            w_we2 <= 1'b1;
-            ram_addr2 <= addr[19:0];
-            ram_data2 <= 32'bz;
-            if (bytemode) begin
-                w_be2 <= 4'b1110;
-                output_data <= {{24{ram_data2[7]}}, ram_data2[7:0]};
+        if (if_write) begin
+            if (~addr[20]) begin
+                w_ce1 <= 1'b0;
+                w_ce2 <= 1'b1;
+                w_oe1 <= 1'b1;
+                w_we1 <= 1'b0;
+                if (bytemode)
+                    w_be1 <= 4'b1110;
+                else
+                    w_be1 <= 4'b0000;
+                ram_addr <= addr[19:0];
+                ram_data <= input_data;
             end
-            else begin
-                w_be2 <= 4'b0000;
-                output_data <= ram_data2;
+            if (addr[20]) begin
+                w_ce1 <= 1'b1;
+                w_ce2 <= 1'b0;
+                w_oe2 <= 1'b1;
+                w_we2 <= 1'b0;
+                if (bytemode)
+                    w_be2 <= 4'b1110;
+                else
+                    w_be2 <= 4'b0000;
+                ram_addr2 <= addr[19:0];
+                ram_data2 <= input_data;
             end
         end
     end
-    if (if_write) begin
-        if (~addr[20]) begin
-            w_ce1 <= 1'b0;
-            w_ce2 <= 1'b1;
-            w_oe1 <= 1'b1;
-            w_we1 <= 1'b0;
-            if (bytemode)
-                w_be1 <= 4'b1110;
-            else
-                w_be1 <= 4'b0000;
-            ram_addr <= addr[19:0];
-            ram_data <= input_data;
-        end
-        if (addr[20]) begin
-            w_ce1 <= 1'b1;
-            w_ce2 <= 1'b0;
-            w_oe2 <= 1'b1;
-            w_we2 <= 1'b0;
-            if (bytemode)
-                w_be2 <= 4'b1110;
-            else
-                w_be2 <= 4'b0000;
-            ram_addr2 <= addr[19:0];
-            ram_data2 <= input_data;
-        end
+    else begin
+        w_ce1 <= 1'b1;
+        w_ce2 <= 1'b1;
+        w_oe1 <= 1'b1;
+        w_oe2 <= 1'b1;
+        w_we1 <= 1'b1;
+        w_we2 <= 1'b1;
     end
 end
-    
+
 endmodule
