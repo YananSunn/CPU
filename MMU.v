@@ -57,7 +57,7 @@ assign ext_ram_be_n = w_be2;
 assign uart_wrn     = wrn;
 assign uart_rdn     = rdn;
 
-always @(posedge clk or negedge clk) begin
+always @(clk) begin
 /*
     if (((addr & 32'h80000000)!=0) & if_read) begin
         case (addr)
