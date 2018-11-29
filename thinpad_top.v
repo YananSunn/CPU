@@ -281,7 +281,7 @@ wire[4:0] mem_wb_i_regwrite;
 wire[31:0] mem_wb_i_res, mem_wb_i_memread;
 
 // forwarding unit
-assign id_ifregwrite = mem_wb_i_ifregwrite || ex_id_f_ifregwrite;
+assign id_ifregwrite = mem_wb_i_ifregwrite | ex_id_f_ifregwrite;
 assign id_regwrite = mem_wb_i_ifregwrite ? mem_wb_i_regwrite : ex_mem_i_regwrite;
 assign id_regdata = mem_wb_i_ifregwrite ? (mem_wb_i_ifmemread ? mem_wb_i_memread : mem_wb_i_res) : ex_mem_i_res;
 

@@ -52,6 +52,8 @@ assign uart_wrn     = wrn;
 assign uart_rdn     = rdn;
 
 always @(posedge clk) begin
+    ram_addr <= addr[21:2];
+    ram_addr2 <= addr[21:2];
     if (if_read) begin
         ram_data <= 32'bz;
         ram_data2 <= 32'bz;
@@ -173,8 +175,8 @@ always @(*) begin
                 if (~addr[22]) begin
                     ce1 <= 1'b0;
                     ce2 <= 1'b1;
-                    oe1 <= 1'b0;
-                    we1 <= 1'b1;
+                    oe1 <= 1'b1;
+                    we1 <= 1'b0;
                     if (bytemode) begin
                         case (addr[1:0])
                         2'b00: be1 <= 4'b0111;
@@ -191,8 +193,8 @@ always @(*) begin
                 else begin
                     ce1 <= 1'b1;
                     ce2 <= 1'b0;
-                    oe2 <= 1'b0;
-                    we2 <= 1'b1;
+                    oe2 <= 1'b1;
+                    we2 <= 1'b0;
                     if (bytemode) begin
                         case (addr[1:0])
                         2'b00: be2 <= 4'b0111;

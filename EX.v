@@ -36,7 +36,7 @@ module EX(
     );
 
 reg[2:0] bubble_cnt_dec, ex_stopcnt_dec;
-assign delay_slot = (~ex_stop) & if_pc_jump;
+assign delay_slot = if_pc_jump;
 
 always @(*) begin
     // passes
@@ -135,10 +135,9 @@ always @(*) begin
             // JR
                 bubble_cnt <= bubble_cnt_dec;
                 ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b010;
-                if_pc_jump <= 1'b1;
                 pc_jumpto <= data_a; // <<2
                 if_forward_reg_write <= 1'b0;
-                if_pc_jump <= 1'b0;
+                if_pc_jump <= ~ex_stop;
             end
             
             default: begin
@@ -213,7 +212,7 @@ always @(*) begin
             if_forward_reg_write <= 1'b0;
             if (data_a == data_b) begin
                 ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b010; // clear backward
-                if_pc_jump <= 1'b1;
+                if_pc_jump <= ~ex_stop;
             end
             else begin
                 ex_stopcnt <= ex_stopcnt_dec; // dont stap
@@ -228,7 +227,7 @@ always @(*) begin
             if_forward_reg_write <= 1'b0;
             if (data_a != data_b) begin
                 ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b010; // clear backward
-                if_pc_jump <= 1'b1;
+                if_pc_jump <= ~ex_stop;
             end
             else begin
                 ex_stopcnt <= ex_stopcnt_dec; // dont stap
@@ -243,7 +242,7 @@ always @(*) begin
             if_forward_reg_write <= 1'b0;
             if (((data_b - data_a)>>31) == 32'b1) begin // signed(A) > signed(B)
                 ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b010; // clear backward
-                if_pc_jump <= 1'b1;
+                if_pc_jump <= ~ex_stop;
             end
             else begin
                 ex_stopcnt <= ex_stopcnt_dec; // dont stap
@@ -297,7 +296,7 @@ always @(*) begin
             // J
             bubble_cnt <= bubble_cnt_dec;
             ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b010;
-            if_pc_jump <= 1'b1;
+            if_pc_jump <= ~ex_stop;
             pc_jumpto <= {4'b0000, jpc, 2'b00}; // <<2
             if_forward_reg_write <= 1'b0;
         end
@@ -307,7 +306,7 @@ always @(*) begin
             result <= npc + 32'd4;
             bubble_cnt <= bubble_cnt_dec;
             ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b010;
-            if_pc_jump <= 1'b1;
+            if_pc_jump <= ~ex_stop;
             pc_jumpto <= {4'b0000, jpc, 2'b00}; // <<2
             if_forward_reg_write <= 1'b0;
         end
