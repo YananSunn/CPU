@@ -32,14 +32,14 @@ module MMU(
 reg oe1 = 1'b1, we1 = 1'b1, ce1 = 1'b1;
 reg oe2 = 1'b1, we2 = 1'b1, ce2 = 1'b1;
 reg[3:0] be = 4'b0000;
-reg[31:0] ram_read_data, ram_write_data;
+reg[31:0] ram_read_data1, ram_read_data2, ram_write_data;
 reg wrn = 1'b1, rdn = 1'b1;
 
 assign base_ram_addr = addr[21:2];
 assign ext_ram_addr  = addr[21:2];
 
-assign base_ram_data = if_read ? ram_read_data : ram_write_data;
-assign ext_ram_data  = if_read ? ram_read_data : ram_write_data;
+assign base_ram_data = if_write ? ram_write_data :  32'bz;
+assign ext_ram_data  = if_write ? ram_write_data :  32'bz;
 
 assign base_ram_ce_n = ce1;
 assign base_ram_oe_n = oe1;
@@ -54,9 +54,7 @@ assign ext_ram_be_n = be;
 assign uart_wrn     = wrn;
 assign uart_rdn     = rdn;
 
-always @(posedge clk) begin
-    ram_read_data <= 32'bz;
-end
+wire[31:0] ram_read_data = addr[22] ? ext_ram_data : base_ram_data;
 
 always @(*) begin
     if (clk) begin
@@ -72,8 +70,6 @@ always @(*) begin
             oe2 <= (~addr[22]) | (~if_read);
             we1 <= addr[22] | (~if_write);
             we2 <= (~addr[22]) | (~if_write);
-            rdn <= 1'b1;
-            wrn <= 1'b1;
             if (if_read) begin
                 if (bytemode) begin
                     case (addr[1:0])
@@ -144,6 +140,8 @@ always @(*) begin
         oe2 <= 1'b1;
         we1 <= 1'b1;
         we2 <= 1'b1;
+        rdn <= 1'b1;
+        wrn <= 1'b1;
     end
 end
 
