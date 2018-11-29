@@ -27,7 +27,7 @@ module ID(
 wire[15:0] imm_16;
 assign imm_16 = ins[15:0];
 
-reg[32:0] registers[0:31];
+reg[31:0] registers[0:31];
 
 // È¡¼Ä´æÆ÷
 // forward: data_aºÍdata_bÊÇwire
