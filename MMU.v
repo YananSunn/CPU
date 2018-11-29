@@ -96,7 +96,17 @@ always @(*) begin
                     endcase
                 end
                 else begin
-                    output_data <= ram_read_data;
+                // for DEBUG
+                    case (addr)
+                        32'h80000000: output_data <= 32'b00100100000000010000000000000001;
+                        32'h80000004: output_data <= 32'b00100100001000010000000000000001;
+                        32'h80000008: output_data <= 32'b10101100000000010000000000000111;
+                        32'h8000000c: output_data <= 32'b10001100000000100000000000000111;
+                        32'h80000010: output_data <= 32'b00100100010000100000000000000001;
+                        default: output_data <= ram_read_data;
+                    endcase
+                // 
+                //  output_data <= ram_read_data;
                     be <= 4'b0000; 
                 end
             end
