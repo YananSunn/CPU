@@ -21,7 +21,7 @@ module IF(
 // ∂¡»°÷∏¡Ó
 assign ins = im_data;
 
-always @(posedge clk) begin
+always @(posedge clk or negedge rst) begin
     if (!rst) begin
         npc <= 32'h80000000;
     end
