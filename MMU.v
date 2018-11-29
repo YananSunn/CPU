@@ -57,105 +57,20 @@ assign ext_ram_be_n = w_be2;
 assign uart_wrn     = wrn;
 assign uart_rdn     = rdn;
 
-always @(clk) begin
-/*
-    if (((addr & 32'h80000000)!=0) & if_read) begin
+always @(*) begin
+    // W/L here
+    if (if_read) begin
         case (addr)
-            32'h80000000: output_data <= 32'b00000000000000000000000000000000;
-            
+        32'd000:output_data <= 32'b00001000000000000000000000000011;
+        32'd004:output_data <= 32'b00100100000000010000000000001111;
+        32'd008:output_data <= 32'b00110000001000100000000000001100;
+        32'd012:output_data <= 32'b00100100000000110000000000010111;
+        32'd016:output_data <= 32'b00011100011000001111111111111101;
+        
+        default: output_data <= 32'b00000000000000000000000000000000;
         endcase
-    end else
-*/
-    if (clk) begin
-        // W/L here
-        if (if_read) begin
-            if (addr[29]) begin
-                if (addr[2]) begin
-                    output_data <= {30'b0, uart_dataready, uart_tbre};
-                end
-                else begin
-                    rdn <= 1'b0;
-                    ram_data <= 32'bz;
-                    output_data <= {24'b0, ram_data[7:0]};
-                end
-            end
-            else begin
-                if (~addr[22]) begin
-                    w_ce1 <= 1'b0;
-                    w_ce2 <= 1'b1;
-                    w_oe1 <= 1'b0;
-                    w_we1 <= 1'b1;
-                    ram_addr <= addr[21:2];
-                    ram_data <= 32'bz;
-                    if (bytemode) begin
-                        w_be1 <= 4'b1110;
-                        output_data <= {{24{ram_data[7]}}, ram_data[7:0]};
-                    end
-                    else begin
-                        w_be1 <= 4'b0000;
-                        output_data <= ram_data;
-                    end
-                end
-                else begin
-                    w_ce1 <= 1'b1;
-                    w_ce2 <= 1'b0;
-                    w_oe2 <= 1'b0;
-                    w_we2 <= 1'b1;
-                    ram_addr2 <= addr[21:2];
-                    ram_data2 <= 32'bz;
-                    if (bytemode) begin
-                        w_be2 <= 4'b1110;
-                        output_data <= {{24{ram_data2[7]}}, ram_data2[7:0]};
-                    end
-                    else begin
-                        w_be2 <= 4'b0000;
-                        output_data <= ram_data2;
-                    end
-                end
-            end
-        end
-        else if (if_write) begin
-            if (addr[29]) begin
-                wrn <= 1'b0;
-                ram_data <= input_data;
-            end
-            else begin
-                if (~addr[22]) begin
-                    w_ce1 <= 1'b0;
-                    w_ce2 <= 1'b1;
-                    w_oe1 <= 1'b1;
-                    w_we1 <= 1'b0;
-                    if (bytemode)
-                        w_be1 <= 4'b1110;
-                    else
-                        w_be1 <= 4'b0000;
-                    ram_addr <= addr[21:2];
-                    ram_data <= input_data;
-                end
-                else begin
-                    w_ce1 <= 1'b1;
-                    w_ce2 <= 1'b0;
-                    w_oe2 <= 1'b1;
-                    w_we2 <= 1'b0;
-                    if (bytemode)
-                        w_be2 <= 4'b1110;
-                    else
-                        w_be2 <= 4'b0000;
-                    ram_addr2 <= addr[21:2];
-                    ram_data2 <= input_data;
-                end
-            end
-        end
     end
-    else begin
-        w_ce1 <= 1'b1;
-        w_ce2 <= 1'b1;
-        w_oe1 <= 1'b1;
-        w_oe2 <= 1'b1;
-        w_we1 <= 1'b1;
-        w_we2 <= 1'b1;
-        rdn <= 1'b1;
-        wrn <= 1'b1;
+    if (if_write) begin
     end
 end
 

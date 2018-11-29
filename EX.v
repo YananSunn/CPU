@@ -20,6 +20,7 @@ module EX(
     input wire[2:0] ex_stopcnt_last,
     output reg[2:0] bubble_cnt,
     output reg[2:0] ex_stopcnt,
+    output wire delay_slot,
     
     output reg if_forward_reg_write,
     
@@ -35,6 +36,7 @@ module EX(
     );
 
 reg[2:0] bubble_cnt_dec, ex_stopcnt_dec;
+assign delay_slot = (~ex_stop) & if_pc_jump;
 
 always @(*) begin
     // passes
