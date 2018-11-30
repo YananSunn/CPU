@@ -174,7 +174,7 @@ assign ex_idex_bubble = (ex_ex_i_bubblecnt != 0);
 assign ex_ifid_bubble = (ex_ex_i_bubblecnt != 0);
 
 // ID/EX registers
-always@(posedge clk) begin
+always@(posedge clk or negedge rst) begin
     if (!rst) begin
         id_ex_o_ifregwrite <= 0;
         id_ex_o_ifmemread <= 0;
@@ -258,7 +258,7 @@ EX ex_instance(
 );
 
 // EX/MEM registers
-always@(posedge clk) begin
+always@(posedge clk or negedge rst) begin
     if (!rst) begin
         ex_mem_o_ifregwrite <= 0;
         ex_mem_o_ifmemread <= 0;
