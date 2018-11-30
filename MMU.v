@@ -60,16 +60,24 @@ always @(*) begin
     if (clk) begin
         case (addr)
             32'hBFD003F8: begin
+                ce1 <= 1'b1;
+                ce2 <= 1'b1;
                 if (if_read) begin
-                    rdn = 1'b0;
+                    rdn <= 1'b0;
+                    wrn <= 1'b1;
                     output_data <= {24'b0, base_ram_data[7:0]};
                 end
                 else if (if_write) begin
-                    wrn = 1'b0;
+                    rdn <= 1'b1;
+                    wrn <= 1'b0;
                     ram_write_data <= input_data;
                 end
             end
-            32'hBFD003F8: begin
+            32'hBFD003FD: begin
+                ce1 <= 1'b1;
+                ce2 <= 1'b1;
+                rdn <= 1'b1;
+                wrn <= 1'b1;
                 if (if_read) begin
                     output_data <= {30'b0, uart_dataready, uart_tsre};
                 end
@@ -82,6 +90,8 @@ always @(*) begin
                 oe2 <= (~addr[22]) | (~if_read);
                 we1 <= addr[22] | (~if_write);
                 we2 <= (~addr[22]) | (~if_write);
+                rdn <= 1'b1;
+                wrn <= 1'b1;
                 if (if_read) begin
                     if (bytemode) begin
                         case (addr[1:0])
@@ -108,17 +118,17 @@ always @(*) begin
                         endcase
                     end
                     else begin
+
                     // for DEBUG
                         case (addr)
-                            32'h80000000: output_data <= 32'b00100100000000010000000000001111;
-                            32'h80000004: output_data <= 32'b00100100001000010000000011110000;
-                            32'h80000008: output_data <= 32'b10100000000000010000000000000111;
-                            32'h8000000c: output_data <= 32'b10000000000000100000000000000111;
-                            32'h80000010: output_data <= 32'b00100100010000101111111111111111;
+                            32'h80000000: output_data <= 32'b00100100000000010000000000000101; // $1 = $0 + 15
+                            32'h80000004: output_data <= 32'b00100100001000010000000000110000; // $1 = $1 + 48
+                            32'h80000008: output_data <= 32'b00111100000000101011111111010000; // $2.hi = 0xBFD0
+                            32'h8000000c: output_data <= 32'b10100000010000010000001111111000; // $2[0x03F8] = $1 //send '5'
                             default: output_data <= ram_read_data;
                         endcase
-                    // 
-                    //  output_data <= ram_read_data;
+
+                        // output_data <= ram_read_data;
                         be <= 4'b0000; 
                     end
                 end
