@@ -31,7 +31,7 @@ assign imm_16 = ins[15:0];
 
 reg[31:0] registers[0:31];
 
-assign debug_leds = registers[5'b01000][15:0];
+assign debug_leds = registers[5'b01000][31:16];
 
 // È¡¼Ä´æÆ÷
 // forward: data_aºÍdata_bÊÇwire
