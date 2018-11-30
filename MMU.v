@@ -72,6 +72,10 @@ always @(*) begin
                     wrn <= 1'b0;
                     ram_write_data <= input_data;
                 end
+                else begin
+                    rdn <= 1'b1;
+                    wrn <= 1'b1;
+                end
             end
             32'hBFD003FD: begin
                 ce1 <= 1'b1;
@@ -118,7 +122,7 @@ always @(*) begin
                         endcase
                     end
                     else begin
-
+/*
                     // for DEBUG
                         case (addr)
                             32'h80000000: output_data <= 32'b00111100000110101000000000000000;
@@ -400,9 +404,9 @@ always @(*) begin
                                     output_data <= ram_read_data;
                             end
                         endcase
-/*
-                        output_data <= ram_read_data;
 */
+                        output_data <= ram_read_data;
+
                         be <= 4'b0000; 
                     end
                 end

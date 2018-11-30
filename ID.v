@@ -174,10 +174,10 @@ end
 
 // reg Write
 always@(posedge clk) begin
-    if (reg_write) begin
+    if (reg_write && (write_reg != 0)) begin
         registers[write_reg] <= write_data;
     end
-    registers[0] <= 32'b0;
+    else registers[0] <= 32'b0;
 end
 
 endmodule

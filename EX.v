@@ -297,7 +297,7 @@ always @(*) begin
             bubble_cnt <= bubble_cnt_dec;
             ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b010;
             if_pc_jump <= ~ex_stop;
-            pc_jumpto <= {4'b0000, jpc, 2'b00}; // <<2
+            pc_jumpto <= {npc[31:28], jpc, 2'b00}; // <<2
             if_forward_reg_write <= 1'b0;
         end
         
@@ -307,7 +307,7 @@ always @(*) begin
             bubble_cnt <= bubble_cnt_dec;
             ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b010;
             if_pc_jump <= ~ex_stop;
-            pc_jumpto <= {4'b0000, jpc, 2'b00}; // <<2
+            pc_jumpto <= {npc[31:28], jpc, 2'b00}; // <<2
             if_forward_reg_write <= 1'b1;
         end
         
