@@ -13,8 +13,8 @@ module ID(
     output reg[5:0] op,
     output reg[5:0] func,
     
-    output wire[31:0] data_a,
-    output wire[31:0] data_b,
+    output reg[31:0] data_a,
+    output reg[31:0] data_b,
     output reg[4:0] data_write_reg,
     output reg[31:0] imm,
     output reg[25:0] jpc,
@@ -33,11 +33,6 @@ reg[31:0] registers[0:31];
 
 assign debug_leds = registers[5'b01000][31:16];
 
-// È¡¼Ä´æÆ÷
-// forward: data_aºÍdata_bÊÇwire
-assign data_a = reg_write && (write_reg == ins[25:21])? write_data : registers[ins[25:21]];
-assign data_b = reg_write && (write_reg == ins[20:16])? write_data : registers[ins[20:16]];
-
 // ID
 always@(*) begin
     npc_o <= npc_i;
@@ -45,6 +40,9 @@ always@(*) begin
     op <= ins[31:26];
     func <= ins[5:0];
     jpc <= ins[25:0];
+    
+    data_a <= (reg_write && (write_reg == ins[25:21])) ? write_data : registers[ins[25:21]];
+    data_b <= (reg_write && (write_reg == ins[20:16])) ? write_data : registers[ins[20:16]];
     
     // ·ûºÅÀ©Õ¹
     imm <= {{16{imm_16[15]}}, imm_16};

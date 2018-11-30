@@ -78,9 +78,19 @@ module thinpad_top(
     output wire video_clk,         //像素时钟输出
     output wire video_de           //行数据有效信号，用于区分消隐区
 );
+wire clk_10M, clk_20M, clk_locked, clk, rst;
 
-wire clk, rst;
-assign clk = clk_11M0592;
+pll_example pll
+(
+    // Clock out ports
+    .clk_out1(clk_10M),     // output clk_out1
+    .clk_out2(clk_20M),     // output clk_out2
+    .locked(clk_locked),
+    // Clock in ports
+    .clk_in1(clk_50M)       // input clk_in1
+);
+
+assign clk = clk_locked & clk_20M;
 assign rst = reset_btn;
 
 // MMU 信号
@@ -171,7 +181,7 @@ ID id_instance(
     .npc_o(id_ex_i_npc)
 );
 
-reg id_ex_exstop;
+reg id_ex_exstop = 1'b1;
 assign ex_idex_bubble = (ex_ex_i_bubblecnt != 0);
 assign ex_ifid_bubble = (ex_ex_i_bubblecnt != 0);
 

@@ -70,11 +70,11 @@ always @(*) begin
             
             6'b100001: begin
             // ADDU
-              result <= data_a + data_b;
-              bubble_cnt <= bubble_cnt_dec;
-              ex_stopcnt <= ex_stopcnt_dec;
-              if_forward_reg_write <= ~ex_stop;
-              if_pc_jump <= 1'b0;
+                result <= data_a + data_b;
+                bubble_cnt <= bubble_cnt_dec;
+                ex_stopcnt <= ex_stopcnt_dec;
+                if_forward_reg_write <= ~ex_stop;
+                if_pc_jump <= 1'b0;
             end
             
             6'b100010: begin

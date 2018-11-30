@@ -77,7 +77,7 @@ always @(*) begin
                     wrn <= 1'b1;
                 end
             end
-            32'hBFD003FD: begin
+            32'hBFD003FC: begin
                 ce1 <= 1'b1;
                 ce2 <= 1'b1;
                 rdn <= 1'b1;
