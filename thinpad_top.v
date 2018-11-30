@@ -166,6 +166,8 @@ ID id_instance(
     .imm(id_ex_i_data2imm),
     .jpc(id_ex_i_jpc),
     
+    .debug_leds(leds),
+    
     .npc_o(id_ex_i_npc)
 );
 

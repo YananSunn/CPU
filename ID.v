@@ -19,6 +19,8 @@ module ID(
     output reg[31:0] imm,
     output reg[25:0] jpc,
     
+    output wire[15:0] debug_leds,
+    
     // pass
     input wire[31:0] npc_i,
     output reg[31:0] npc_o
@@ -28,6 +30,8 @@ wire[15:0] imm_16;
 assign imm_16 = ins[15:0];
 
 reg[31:0] registers[0:31];
+
+assign debug_leds = registers[5'b01000][15:0];
 
 // 取寄存器
 // forward: data_a和data_b是wire
@@ -93,7 +97,7 @@ always@(*) begin
             data_write_reg <= ins[20:16];
         end
         6'b001111: begin
-        // LIU
+        // LUI
             if_reg_write <= 1'b0; // 在旁路单元中写回
             if_mem_read <= 1'b0;
             if_mem_write <= 1'b0;
