@@ -83,19 +83,19 @@ wire[7:0] dpys;
 SEG7_LUT lut0(dpy0, dpys[3:0]);
 SEG7_LUT lut1(dpy1, dpys[7:4]);
 
-wire clk_10M, clk_20M, clk_locked, clk, rst;
+wire clk_10M, clk_custom, clk_locked, clk, rst;
 
 pll_example pll
 (
     // Clock out ports
     .clk_out1(clk_10M),     // output clk_out1
-    .clk_out2(clk_20M),     // output clk_out2
+    .clk_out2(clk_custom),     // output clk_out2
     .locked(clk_locked),
     // Clock in ports
     .clk_in1(clk_50M)       // input clk_in1
 );
 
-assign clk = clk_locked & clk_10M;
+assign clk = clk_locked & clk_custom;
 assign rst = ~reset_btn;
 
 // MMU пе╨е
