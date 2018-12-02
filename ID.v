@@ -1,5 +1,6 @@
 module ID(
     input wire clk,
+    input wire rst,
 
     input wire[31:0] ins,
     
@@ -19,19 +20,12 @@ module ID(
     output reg[31:0] imm,
     output reg[25:0] jpc,
     
-    output wire[15:0] debug_leds,
-    
     // pass
     input wire[31:0] npc_i,
     output reg[31:0] npc_o
     );
 
-wire[15:0] imm_16;
-assign imm_16 = ins[15:0];
-
 reg[31:0] registers[0:31];
-
-assign debug_leds = registers[5'b01000][31:16];
 
 // ID
 always@(*) begin
@@ -45,13 +39,13 @@ always@(*) begin
     data_b <= (reg_write && (write_reg == ins[20:16])) ? write_data : registers[ins[20:16]];
     
     // 符号扩展
-    imm <= {{16{imm_16[15]}}, imm_16};
+    imm <= ins[15] ? {16'hffff, ins[15:0]} : {16'h0000, ins[15:0]};
     
     case (ins[31:26])
         // list all operations        
         // R型
         6'b000000: begin
-        // SPECAL (ADD, SUB, ...)
+        // SPECAL (ADD, SUB, ..., JR)
             if_reg_write <= 1'b0; // 在旁路单元中写回
             if_mem_read <= 1'b0;
             if_mem_write <= 1'b0;
@@ -171,9 +165,44 @@ always@(*) begin
 end
 
 // reg Write
-always@(posedge clk) begin
-    if (reg_write && (write_reg != 0)) begin
+always@(posedge clk or negedge rst) begin
+    if (!rst) begin
+        registers[0] <= 32'b0;
+        registers[1] <= 32'b0;
+        registers[2] <= 32'b0;
+        registers[3] <= 32'b0;
+        registers[4] <= 32'b0;
+        registers[5] <= 32'b0;
+        registers[6] <= 32'b0;
+        registers[7] <= 32'b0;
+        registers[8] <= 32'b0;
+        registers[9] <= 32'b0;
+        registers[10] <= 32'b0;
+        registers[11] <= 32'b0;
+        registers[12] <= 32'b0;
+        registers[13] <= 32'b0;
+        registers[14] <= 32'b0;
+        registers[15] <= 32'b0;
+        registers[16] <= 32'b0;
+        registers[17] <= 32'b0;
+        registers[18] <= 32'b0;
+        registers[19] <= 32'b0;
+        registers[20] <= 32'b0;
+        registers[21] <= 32'b0;
+        registers[22] <= 32'b0;
+        registers[23] <= 32'b0;
+        registers[24] <= 32'b0;
+        registers[25] <= 32'b0;
+        registers[26] <= 32'b0;
+        registers[27] <= 32'b0;
+        registers[28] <= 32'b0;
+        registers[29] <= 32'b0;
+        registers[30] <= 32'b0;
+        registers[31] <= 32'b0;
+    end
+    else if (reg_write && (write_reg != 0)) begin
         registers[write_reg] <= write_data;
+        registers[0] <= 32'b0;
     end
     else registers[0] <= 32'b0;
 end

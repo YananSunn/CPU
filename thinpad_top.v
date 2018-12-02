@@ -78,6 +78,11 @@ module thinpad_top(
     output wire video_clk,         //像素时钟输出
     output wire video_de           //行数据有效信号，用于区分消隐区
 );
+
+wire[7:0] dpys;
+SEG7_LUT lut0(dpy0, dpys[3:0]);
+SEG7_LUT lut1(dpy1, dpys[7:4]);
+
 wire clk_10M, clk_20M, clk_locked, clk, rst;
 
 pll_example pll
@@ -90,8 +95,8 @@ pll_example pll
     .clk_in1(clk_50M)       // input clk_in1
 );
 
-assign clk = clk_locked & clk_20M;
-assign rst = reset_btn;
+assign clk = clk_locked & clk_10M;
+assign rst = ~reset_btn;
 
 // MMU 信号
 wire mmu_read_wire, mmu_write_wire;
@@ -156,6 +161,7 @@ reg [31:0] id_ex_o_data1, id_ex_o_data2, id_ex_o_data2imm, id_ex_o_npc;
 ID id_instance(
     // input
     .clk(clk),
+    .rst(rst),
     
     .ins(if_id_o_ins),
     .reg_write(id_ifregwrite),
@@ -175,9 +181,6 @@ ID id_instance(
     .data_write_reg(id_ex_i_regwrite),
     .imm(id_ex_i_data2imm),
     .jpc(id_ex_i_jpc),
-    
-    .debug_leds(leds),
-    
     .npc_o(id_ex_i_npc)
 );
 
@@ -188,6 +191,7 @@ assign ex_ifid_bubble = (ex_ex_i_bubblecnt != 0);
 // ID/EX registers
 always@(posedge clk or negedge rst) begin
     if (!rst) begin
+        id_ex_exstop <= 1'b1;
         id_ex_o_ifregwrite <= 0;
         id_ex_o_ifmemread <= 0;
         id_ex_o_ifmemwrite <= 0;
@@ -335,8 +339,6 @@ MMU mmu_instance(
     
     .output_data(mmu_out_data),
     
-    // pass ports
-    
     // base_ram
     .base_ram_data(base_ram_data),
     .base_ram_addr(base_ram_addr),
@@ -351,12 +353,15 @@ MMU mmu_instance(
     .ext_ram_ce_n(ext_ram_ce_n),
     .ext_ram_oe_n(ext_ram_oe_n),
     .ext_ram_we_n(ext_ram_we_n),
-    
+    // uart
     .uart_rdn(uart_rdn),
     .uart_wrn(uart_wrn),
     .uart_dataready(uart_dataready),
     .uart_tbre(uart_tbre),
-    .uart_tsre(uart_tsre)
+    .uart_tsre(uart_tsre),
+    // leds & dpy
+    .debug_leds(leds),
+    .debug_dpys(dpys)
 );
 
 endmodule

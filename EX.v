@@ -52,6 +52,8 @@ always @(*) begin
     /*
     find conflicts and pause
     */
+    result <= 32'b0; // avoid latches
+    load_byte <= 1'b0;
     
     // ALU
     case (op)
@@ -135,7 +137,7 @@ always @(*) begin
             // JR
                 bubble_cnt <= bubble_cnt_dec;
                 ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b010;
-                pc_jumpto <= data_a; // <<2
+                pc_jumpto <= data_a;
                 if_forward_reg_write <= 1'b0;
                 if_pc_jump <= ~ex_stop;
             end
@@ -252,7 +254,6 @@ always @(*) begin
         
         6'b100011: begin
             // LW
-            load_byte <= 1'b0;
             result <= data_a + imm;
             bubble_cnt <= ex_stop ? bubble_cnt_dec : 3'b010; // IF/ID/EX stop
             ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b010; // R/W conflict
@@ -272,10 +273,9 @@ always @(*) begin
         
         6'b101011: begin
             // SW
-            load_byte <= 1'b0;
             result <= data_a + imm;
             mem_data <= data_b; // write mem
-            bubble_cnt <= ex_stop ? bubble_cnt_dec : 3'b001; // IF/ID/EX stop
+            bubble_cnt <= ex_stop ? bubble_cnt_dec : 3'b010; // IF/ID/EX stop
             ex_stopcnt <= ex_stopcnt_dec;
             if_pc_jump <= 1'b0;
             if_forward_reg_write <= 1'b0;
@@ -286,7 +286,7 @@ always @(*) begin
             load_byte <= 1'b1;
             result <= data_a + imm;
             mem_data <= data_b; // write mem
-            bubble_cnt <= ex_stop ? bubble_cnt_dec : 3'b001; // IF/ID/EX stop
+            bubble_cnt <= ex_stop ? bubble_cnt_dec : 3'b010; // IF/ID/EX stop
             ex_stopcnt <= ex_stopcnt_dec;
             if_pc_jump <= 1'b0;
             if_forward_reg_write <= 1'b0;
@@ -308,7 +308,7 @@ always @(*) begin
             ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b010;
             if_pc_jump <= ~ex_stop;
             pc_jumpto <= {npc[31:28], jpc, 2'b00}; // <<2
-            if_forward_reg_write <= 1'b1;
+            if_forward_reg_write <= ~ex_stop;
         end
         
         default: begin
