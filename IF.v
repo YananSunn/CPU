@@ -15,11 +15,13 @@ module IF(
     output reg[31:0] im_addr,
     
     output reg[31:0] npc = 32'h80000000, // pc_inital
-    output wire[31:0] ins
+    output reg[31:0] ins
     );
 
 // ¶ÁÈ¡Ö¸Áî
-assign ins = im_data;
+always @(*) begin
+    ins <= im_data;
+end
 
 always @(posedge clk or negedge rst) begin
     if (!rst) begin

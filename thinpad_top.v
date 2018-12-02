@@ -118,7 +118,7 @@ wire[31:0] id_regdata;
 
 // IF/ID пе╨е
 wire[31:0] if_id_i_ins, if_id_i_npc;
-reg[31:0]  if_id_o_ins, if_id_o_npc;
+reg [31:0] if_id_o_ins, if_id_o_npc;
 // IM пе╨е
 wire[31:0] if_imdata, if_imaddr;
 
@@ -155,8 +155,8 @@ wire[4:0] id_ex_i_regwrite;
 reg [4:0] id_ex_o_regwrite;
 wire[25:0] id_ex_i_jpc;
 reg [25:0] id_ex_o_jpc;
-wire[31:0] id_ex_i_data1, id_ex_i_data2, id_ex_i_data2imm, id_ex_i_npc;
-reg [31:0] id_ex_o_data1, id_ex_o_data2, id_ex_o_data2imm, id_ex_o_npc;
+wire[31:0] id_ex_i_data1, id_ex_i_data2, id_ex_i_zeroimm, id_ex_i_signimm, id_ex_i_npc;
+reg [31:0] id_ex_o_data1, id_ex_o_data2, id_ex_o_zeroimm, id_ex_o_signimm, id_ex_o_npc;
 
 ID id_instance(
     // input
@@ -179,7 +179,8 @@ ID id_instance(
     .data_a(id_ex_i_data1),
     .data_b(id_ex_i_data2),
     .data_write_reg(id_ex_i_regwrite),
-    .imm(id_ex_i_data2imm),
+    .simm(id_ex_i_signimm),
+    .zimm(id_ex_i_zeroimm),
     .jpc(id_ex_i_jpc),
     .npc_o(id_ex_i_npc)
 );
@@ -213,7 +214,8 @@ always@(posedge clk or negedge rst) begin
             id_ex_o_regwrite <= id_ex_i_regwrite;
             id_ex_o_data1 <= id_ex_i_data1;
             id_ex_o_data2 <= id_ex_i_data2;
-            id_ex_o_data2imm <= id_ex_i_data2imm;
+            id_ex_o_zeroimm <= id_ex_i_zeroimm;
+            id_ex_o_signimm <= id_ex_i_signimm;
             id_ex_o_jpc <= id_ex_i_jpc;
         end
         else begin
@@ -241,7 +243,8 @@ EX ex_instance(
     .ex_stop(id_ex_exstop),
     .data_a(id_ex_o_data1),
     .data_b(id_ex_o_data2),
-    .imm(id_ex_o_data2imm),
+    .simm(id_ex_o_signimm),
+    .zimm(id_ex_o_zeroimm),
     .jpc(id_ex_o_jpc),
     .npc(id_ex_o_npc),
     

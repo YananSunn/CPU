@@ -17,7 +17,8 @@ module ID(
     output reg[31:0] data_a,
     output reg[31:0] data_b,
     output reg[4:0] data_write_reg,
-    output reg[31:0] imm,
+    output reg[31:0] simm,
+    output reg[31:0] zimm,
     output reg[25:0] jpc,
     
     // pass
@@ -39,7 +40,11 @@ always@(*) begin
     data_b <= (reg_write && (write_reg == ins[20:16])) ? write_data : registers[ins[20:16]];
     
     // ·ûºÅÀ©Õ¹
-    imm <= ins[15] ? {16'hffff, ins[15:0]} : {16'h0000, ins[15:0]};
+    simm <= ins[15] ? {16'hffff, ins[15:0]} : {16'h0000, ins[15:0]};
+    zimm <= {16'h0000, ins[15:0]};
+    
+    // avoid latches
+    data_write_reg <= 5'b00000;
     
     case (ins[31:26])
         // list all operations        
