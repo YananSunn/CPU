@@ -1,5 +1,3 @@
-// ADD, ADDI, ADDU, ADDUI, AND, ANDI, BEQ, BGTZ, BNE, J, JAL, JR, LB, LUI, LW, OR, ORI, SB, SLL, SRL, SW, SUB, XOR, XORI
-
 module EX(
     input wire[5:0] op,
     input wire[5:0] func,
@@ -83,6 +81,16 @@ always @(*) begin
             
             6'b100010: begin
             // SUB
+            // TODO: “Ï≥£
+                result <= data_a - data_b;
+                bubble_cnt <= bubble_cnt_dec;
+                ex_stopcnt <= ex_stopcnt_dec;
+                if_forward_reg_write <= ~ex_stop;
+                if_pc_jump <= 1'b0;
+            end
+            
+            6'b100010: begin
+            // SUBU
                 result <= data_a - data_b;
                 bubble_cnt <= bubble_cnt_dec;
                 ex_stopcnt <= ex_stopcnt_dec;
@@ -257,8 +265,8 @@ always @(*) begin
         6'b100011: begin
             // LW
             result <= data_a + simm;
-            bubble_cnt <= ex_stop ? bubble_cnt_dec : 3'b010; // IF/ID/EX stop
-            ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b010; // R/W conflict
+            bubble_cnt <= ex_stop ? bubble_cnt_dec : 3'b001; // IF/ID/EX stop
+            ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b001; // R/W conflict
             if_pc_jump <= 1'b0;
             if_forward_reg_write <= 1'b0;
         end
@@ -267,8 +275,8 @@ always @(*) begin
             // LB
             load_byte <= 1'b1;
             result <= data_a + simm;
-            bubble_cnt <= ex_stop ? bubble_cnt_dec : 3'b010; // IF/ID/EX stop
-            ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b010; // R/W conflict
+            bubble_cnt <= ex_stop ? bubble_cnt_dec : 3'b001; // IF/ID/EX stop
+            ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b001; // R/W conflict
             if_pc_jump <= 1'b0;
             if_forward_reg_write <= 1'b0;
         end
@@ -277,8 +285,8 @@ always @(*) begin
             // SW
             result <= data_a + simm;
             mem_data <= data_b; // write mem
-            bubble_cnt <= ex_stop ? bubble_cnt_dec : 3'b010; // IF/ID/EX stop
-            ex_stopcnt <= ex_stopcnt_dec;
+            bubble_cnt <= ex_stop ? bubble_cnt_dec : 3'b001; // IF/ID/EX stop
+            ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b001;
             if_pc_jump <= 1'b0;
             if_forward_reg_write <= 1'b0;
         end
@@ -288,8 +296,8 @@ always @(*) begin
             load_byte <= 1'b1;
             result <= data_a + simm;
             mem_data <= data_b; // write mem
-            bubble_cnt <= ex_stop ? bubble_cnt_dec : 3'b010; // IF/ID/EX stop
-            ex_stopcnt <= ex_stopcnt_dec;
+            bubble_cnt <= ex_stop ? bubble_cnt_dec : 3'b001; // IF/ID/EX stop
+            ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b001;
             if_pc_jump <= 1'b0;
             if_forward_reg_write <= 1'b0;
         end

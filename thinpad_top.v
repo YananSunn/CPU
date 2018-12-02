@@ -104,7 +104,7 @@ wire[31:0] mmu_addr_wire, mmu_out_data, mmu_in_data;
 reg [31:0] mmu_addr; // MMU地址/数据
 
 // 反向传递信号
-wire ex_ifid_bubble, ex_idex_bubble, ex_if_ifpcjump;
+wire ex_if_bubble, ex_reg_bubble, ex_if_ifpcjump;
 wire ex_ex_i_delayslot;
 wire[2:0] ex_ex_i_bubblecnt         , ex_ex_i_stopcnt         ;
 reg [2:0] ex_ex_o_bubblecnt = 3'b000, ex_ex_o_stopcnt = 3'b011; // stop the inital commands
@@ -128,7 +128,7 @@ IF if_instance(
     .rst(rst),
     .jpc(ex_if_pcjumpto),
     .if_pc_jump(ex_if_ifpcjump),
-    .if_bubble(ex_ifid_bubble),
+    .if_bubble(ex_if_bubble),
     .im_data(if_imdata),
     
     // output
@@ -140,7 +140,7 @@ IF if_instance(
 
 // IF/ID registers
 always@(posedge clk) begin
-    if (!ex_ifid_bubble) begin
+    if (!ex_reg_bubble) begin
         if_id_o_npc <= if_id_i_npc;
         if_id_o_ins <= if_id_i_ins;
     end
@@ -186,8 +186,8 @@ ID id_instance(
 );
 
 reg id_ex_exstop = 1'b1;
-assign ex_idex_bubble = (ex_ex_i_bubblecnt != 0);
-assign ex_ifid_bubble = (ex_ex_i_bubblecnt != 0);
+assign ex_if_bubble = (ex_ex_i_bubblecnt != 0);
+assign ex_reg_bubble = (ex_ex_i_bubblecnt != 0);
 
 // ID/EX registers
 always@(posedge clk or negedge rst) begin
@@ -203,7 +203,7 @@ always@(posedge clk or negedge rst) begin
         ex_ex_o_bubblecnt <= ex_ex_i_bubblecnt;
         ex_ex_o_stopcnt <= ex_ex_i_stopcnt;
     
-        if (!ex_idex_bubble) begin
+        if (!ex_reg_bubble) begin
             id_ex_exstop <= (~ex_ex_i_delayslot) & (ex_ex_i_stopcnt != 0);
             id_ex_o_npc <= id_ex_i_npc;
             id_ex_o_ifregwrite <= id_ex_i_ifregwrite;
