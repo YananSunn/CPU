@@ -111,7 +111,7 @@ always @(*) begin
                 ce2 <= 1'b1;
                 be <= 1'h0;
                 if (if_read) begin
-                    rdn <= 1'b0;
+                    rdn <= 1'b1;
                     wrn <= 1'b1;
                     output_data <= {30'b0, uart_dataready, uart_tsre};
                     ram_write_data <= 32'h00000000;
