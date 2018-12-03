@@ -1,4 +1,7 @@
 module EX(
+    input wire clk,
+    input wire rst,
+
     input wire[5:0] op,
     input wire[5:0] func,
     input wire ex_stop,
@@ -13,7 +16,7 @@ module EX(
     output reg[31:0] mem_data,
     output reg if_pc_jump,
     output reg[31:0] pc_jumpto,
-    output reg load_byte,
+    output reg[4:0] load_byte,
     
     input wire[2:0] bubble_cnt_last,
     input wire[2:0] ex_stopcnt_last,
@@ -37,6 +40,9 @@ module EX(
 reg[2:0] bubble_cnt_dec, ex_stopcnt_dec;
 assign delay_slot = if_pc_jump;
 
+reg [31:0] hi, lo, cp0[0:31];
+wire[31:0] sl_addr = data_a + simm;
+
 always @(*) begin
     // passes
     if_reg_write_o <= ex_stop ? 1'b0 : if_reg_write_i;
@@ -53,283 +59,556 @@ always @(*) begin
     */
     result <= 32'h00000000; // avoid latches
     pc_jumpto <= 32'h00000000; // avoid latches
-    load_byte <= 1'b0;
+    load_byte <= 5'b01111;
     
     // ALU
     case (op)
-        6'b000000: begin
-            // SPECIAL
-            case (func)
-            6'b100000: begin
-            // ADD
-            // TODO: 异常
-                result <= data_a + data_b;
-                bubble_cnt <= bubble_cnt_dec;
-                ex_stopcnt <= ex_stopcnt_dec;
-                if_forward_reg_write <= ~ex_stop;
-                if_pc_jump <= 1'b0;
-            end
-            
-            6'b100001: begin
-            // ADDU
-                result <= data_a + data_b;
-                bubble_cnt <= bubble_cnt_dec;
-                ex_stopcnt <= ex_stopcnt_dec;
-                if_forward_reg_write <= ~ex_stop;
-                if_pc_jump <= 1'b0;
-            end
-            
-            6'b100010: begin
-            // SUB
-            // TODO: 异常
-                result <= data_a - data_b;
-                bubble_cnt <= bubble_cnt_dec;
-                ex_stopcnt <= ex_stopcnt_dec;
-                if_forward_reg_write <= ~ex_stop;
-                if_pc_jump <= 1'b0;
-            end
-            
-            6'b100010: begin
-            // SUBU
-                result <= data_a - data_b;
-                bubble_cnt <= bubble_cnt_dec;
-                ex_stopcnt <= ex_stopcnt_dec;
-                if_forward_reg_write <= ~ex_stop;
-                if_pc_jump <= 1'b0;
-            end
-            
-            6'b100100: begin
-            // AND
-                result <= data_a & data_b;
-                bubble_cnt <= bubble_cnt_dec;
-                ex_stopcnt <= ex_stopcnt_dec;
-                if_forward_reg_write <= ~ex_stop;
-                if_pc_jump <= 1'b0;
-            end
-            
-            6'b100101: begin
-            // OR
-                result <= data_a | data_b;
-                bubble_cnt <= bubble_cnt_dec;
-                ex_stopcnt <= ex_stopcnt_dec;
-                if_forward_reg_write <= ~ex_stop;
-                if_pc_jump <= 1'b0;
-            end
-            
-            6'b100110: begin
-            // XOR
-                result <= data_a ^ data_b;
-                bubble_cnt <= bubble_cnt_dec;
-                ex_stopcnt <= ex_stopcnt_dec;
-                if_forward_reg_write <= ~ex_stop;
-                if_pc_jump <= 1'b0;
-            end
-            
-            6'b000000: begin
-            // SLL
-                result <= data_b << zimm[10:6];
-                bubble_cnt <= bubble_cnt_dec;
-                ex_stopcnt <= ex_stopcnt_dec;
-                if_forward_reg_write <= ~ex_stop;
-                if_pc_jump <= 1'b0;
-            end
-            
-            6'b000010: begin
-            // SRL
-                result <= data_b >> zimm[10:6];
-                bubble_cnt <= bubble_cnt_dec;
-                ex_stopcnt <= ex_stopcnt_dec;
-                if_forward_reg_write <= ~ex_stop;
-                if_pc_jump <= 1'b0;
-            end
-            
-            6'b001000: begin
-            // JR
-                bubble_cnt <= bubble_cnt_dec;
-                ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b010;
-                pc_jumpto <= data_a;
-                if_forward_reg_write <= 1'b0;
-                if_pc_jump <= ~ex_stop;
-            end
-            
-            default: begin
-                bubble_cnt <= bubble_cnt_dec;
-                ex_stopcnt <= ex_stopcnt_dec;
-                if_forward_reg_write <= 1'b0;
-                if_pc_jump <= 1'b0;
-                // TODO: exception
-            end
-            endcase
-        end
-        
-        6'b001000: begin
-            // ADDI
-            // TODO: 异常
+    6'b000000: begin
+        // SPECIAL
+        case (func)
+        6'b100000: begin
+        // ADD
+        // TODO: 异常
+            result <= data_a + data_b;
             bubble_cnt <= bubble_cnt_dec;
             ex_stopcnt <= ex_stopcnt_dec;
-            if_pc_jump <= 1'b0;
-            result <= data_a + simm;
             if_forward_reg_write <= ~ex_stop;
+            if_pc_jump <= 1'b0;
         end
         
-        6'b001001: begin
-            // ADDIU
+        6'b100001: begin
+        // ADDU
+            result <= data_a + data_b;
             bubble_cnt <= bubble_cnt_dec;
             ex_stopcnt <= ex_stopcnt_dec;
-            if_pc_jump <= 1'b0;
-            result <= data_a + simm;
             if_forward_reg_write <= ~ex_stop;
+            if_pc_jump <= 1'b0;
         end
         
-        6'b001100: begin
-            // ANDI
+        6'b100010: begin
+        // SUB
+        // TODO: 异常
+            result <= data_a - data_b;
             bubble_cnt <= bubble_cnt_dec;
             ex_stopcnt <= ex_stopcnt_dec;
-            if_pc_jump <= 1'b0;
-            result <= data_a & zimm;
             if_forward_reg_write <= ~ex_stop;
-        end
-        
-        6'b001101: begin
-            // ORI
-            bubble_cnt <= bubble_cnt_dec;
-            ex_stopcnt <= ex_stopcnt_dec;
             if_pc_jump <= 1'b0;
-            result <= data_a | zimm;
-            if_forward_reg_write <= ~ex_stop;
-        end
-        
-        6'b001110: begin
-            // XORI
-            bubble_cnt <= bubble_cnt_dec;
-            ex_stopcnt <= ex_stopcnt_dec;
-            if_pc_jump <= 1'b0;
-            result <= data_a ^ zimm;
-            if_forward_reg_write <= ~ex_stop;
-        end
-        
-        6'b001111: begin
-            // LUI
-            bubble_cnt <= bubble_cnt_dec;
-            ex_stopcnt <= ex_stopcnt_dec;
-            if_pc_jump <= 1'b0;
-            result <= (zimm << 16);
-            if_forward_reg_write <= ~ex_stop;
-        end
-        
-        6'b000100: begin
-            // BEQ
-            bubble_cnt <= bubble_cnt_dec;
-            pc_jumpto <= npc + {simm[29:0], 2'b00};
-            if_forward_reg_write <= 1'b0;
-            if (data_a == data_b) begin
-                ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b010; // clear backward
-                if_pc_jump <= ~ex_stop;
-            end
-            else begin
-                ex_stopcnt <= ex_stopcnt_dec; // dont stap
-                if_pc_jump <= 1'b0;
-            end
-        end
-        
-        6'b000101: begin
-            // BNE
-            bubble_cnt <= bubble_cnt_dec;
-            pc_jumpto <= npc + {simm[29:0], 2'b00};
-            if_forward_reg_write <= 1'b0;
-            if (data_a != data_b) begin
-                ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b010; // clear backward
-                if_pc_jump <= ~ex_stop;
-            end
-            else begin
-                ex_stopcnt <= ex_stopcnt_dec; // dont stap
-                if_pc_jump <= 1'b0;
-            end
-        end
-        
-        6'b000111: begin
-            // BGTZ
-            bubble_cnt <= bubble_cnt_dec;
-            pc_jumpto <= npc + {simm[29:0], 2'b00};
-            if_forward_reg_write <= 1'b0;
-            if (((data_b - data_a)>>31) == 32'b1) begin // signed(A) > signed(B)
-                ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b010; // clear backward
-                if_pc_jump <= ~ex_stop;
-            end
-            else begin
-                ex_stopcnt <= ex_stopcnt_dec; // dont stap
-                if_pc_jump <= 1'b0;
-            end
         end
         
         6'b100011: begin
-            // LW
-            result <= data_a + simm;
-            bubble_cnt <= ex_stop ? bubble_cnt_dec : 3'b001; // IF/ID/EX stop
-            ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b001; // R/W conflict
+        // SUBU
+            result <= data_a - data_b;
+            bubble_cnt <= bubble_cnt_dec;
+            ex_stopcnt <= ex_stopcnt_dec;
+            if_forward_reg_write <= ~ex_stop;
             if_pc_jump <= 1'b0;
-            if_forward_reg_write <= 1'b0;
         end
         
-        6'b100000: begin
-            // LB
-            load_byte <= 1'b1;
-            result <= data_a + simm;
-            bubble_cnt <= ex_stop ? bubble_cnt_dec : 3'b001; // IF/ID/EX stop
-            ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b001; // R/W conflict
+        6'b100100: begin
+        // AND
+            result <= data_a & data_b;
+            bubble_cnt <= bubble_cnt_dec;
+            ex_stopcnt <= ex_stopcnt_dec;
+            if_forward_reg_write <= ~ex_stop;
             if_pc_jump <= 1'b0;
-            if_forward_reg_write <= 1'b0;
         end
         
-        6'b101011: begin
-            // SW
-            result <= data_a + simm;
-            mem_data <= data_b; // write mem
-            bubble_cnt <= ex_stop ? bubble_cnt_dec : 3'b001; // IF/ID/EX stop
-            ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b001;
+        6'b100101: begin
+        // OR
+            result <= data_a | data_b;
+            bubble_cnt <= bubble_cnt_dec;
+            ex_stopcnt <= ex_stopcnt_dec;
+            if_forward_reg_write <= ~ex_stop;
             if_pc_jump <= 1'b0;
-            if_forward_reg_write <= 1'b0;
         end
         
-        6'b101000: begin
-            // SB
-            load_byte <= 1'b1;
-            result <= data_a + simm;
-            mem_data <= data_b; // write mem
-            bubble_cnt <= ex_stop ? bubble_cnt_dec : 3'b001; // IF/ID/EX stop
-            ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b001;
+        6'b100110: begin
+        // XOR
+            result <= data_a ^ data_b;
+            bubble_cnt <= bubble_cnt_dec;
+            ex_stopcnt <= ex_stopcnt_dec;
+            if_forward_reg_write <= ~ex_stop;
             if_pc_jump <= 1'b0;
-            if_forward_reg_write <= 1'b0;
+        end
+        
+        6'b100111: begin
+        // NOR
+            result <= ~(data_a | data_b);
+            bubble_cnt <= bubble_cnt_dec;
+            ex_stopcnt <= ex_stopcnt_dec;
+            if_forward_reg_write <= ~ex_stop;
+            if_pc_jump <= 1'b0;
+        end
+        
+        6'b000000: begin
+        // SLL
+            result <= data_b << zimm[10:6];
+            bubble_cnt <= bubble_cnt_dec;
+            ex_stopcnt <= ex_stopcnt_dec;
+            if_forward_reg_write <= ~ex_stop;
+            if_pc_jump <= 1'b0;
+        end
+
+        6'b000100: begin
+        // SLLV
+            result <= data_b << data_a[4:0];
+            bubble_cnt <= bubble_cnt_dec;
+            ex_stopcnt <= ex_stopcnt_dec;
+            if_forward_reg_write <= ~ex_stop;
+            if_pc_jump <= 1'b0;
         end
         
         6'b000010: begin
-            // J
+        // SRL
+            result <= data_b >> zimm[10:6];
             bubble_cnt <= bubble_cnt_dec;
-            ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b010;
-            if_pc_jump <= ~ex_stop;
-            pc_jumpto <= {npc[31:28], jpc, 2'b00}; // <<2
-            if_forward_reg_write <= 1'b0;
+            ex_stopcnt <= ex_stopcnt_dec;
+            if_forward_reg_write <= ~ex_stop;
+            if_pc_jump <= 1'b0;
+        end
+        
+        6'b000110: begin
+        // SRLV
+            result <= data_b >> data_a[4:0];
+            bubble_cnt <= bubble_cnt_dec;
+            ex_stopcnt <= ex_stopcnt_dec;
+            if_forward_reg_write <= ~ex_stop;
+            if_pc_jump <= 1'b0;
         end
         
         6'b000011: begin
-            // JAL
+        // SRA
+            result <= ($signed(data_b)) >>> zimm[10:6];
+            bubble_cnt <= bubble_cnt_dec;
+            ex_stopcnt <= ex_stopcnt_dec;
+            if_forward_reg_write <= ~ex_stop;
+            if_pc_jump <= 1'b0;
+        end
+        
+        6'b000111: begin
+        // SRAV
+            result <= ($signed(data_b)) >>> data_a[4:0];
+            bubble_cnt <= bubble_cnt_dec;
+            ex_stopcnt <= ex_stopcnt_dec;
+            if_forward_reg_write <= ~ex_stop;
+            if_pc_jump <= 1'b0;
+        end
+        
+        6'b101010: begin
+        // SLT
+            result <= ($signed(data_a) < $signed(data_b));
+            bubble_cnt <= bubble_cnt_dec;
+            ex_stopcnt <= ex_stopcnt_dec;
+            if_forward_reg_write <= ~ex_stop;
+            if_pc_jump <= 1'b0;
+        end
+        
+        6'b101011: begin
+        // SLTU
+            result <= data_a < data_b ? 32'h00000001 : 32'h00000000;
+            bubble_cnt <= bubble_cnt_dec;
+            ex_stopcnt <= ex_stopcnt_dec;
+            if_forward_reg_write <= ~ex_stop;
+            if_pc_jump <= 1'b0;
+        end
+        
+        6'b001000: begin
+        // JR
+            bubble_cnt <= bubble_cnt_dec;
+            ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b010;
+            pc_jumpto <= data_a;
+            if_forward_reg_write <= 1'b0;
+            if_pc_jump <= ~ex_stop;
+        end
+        
+        6'b001001: begin
+        // JALR
             result <= npc + 32'd4;
             bubble_cnt <= bubble_cnt_dec;
             ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b010;
+            pc_jumpto <= data_a;
+            if_forward_reg_write <= 1'b1;
             if_pc_jump <= ~ex_stop;
-            pc_jumpto <= {npc[31:28], jpc, 2'b00}; // <<2
+        end
+        
+        6'b010000: begin
+        // MFHI
+            result <= hi;
+            bubble_cnt <= bubble_cnt_dec;
+            ex_stopcnt <= ex_stopcnt_dec;
             if_forward_reg_write <= ~ex_stop;
+            if_pc_jump <= 1'b0;
+        end
+        
+        6'b010010: begin
+        // MFLO
+            result <= lo;
+            bubble_cnt <= bubble_cnt_dec;
+            ex_stopcnt <= ex_stopcnt_dec;
+            if_forward_reg_write <= ~ex_stop;
+            if_pc_jump <= 1'b0;
+        end
+        
+        6'b010011, 6'b010001: begin
+        // MTLO, MTHI
+            bubble_cnt <= bubble_cnt_dec;
+            ex_stopcnt <= ex_stopcnt_dec;
+            if_forward_reg_write <= 1'b0;
+            if_pc_jump <= 1'b0;
         end
         
         default: begin
-            // unknown
+            bubble_cnt <= bubble_cnt_dec;
+            ex_stopcnt <= ex_stopcnt_dec;
+            if_forward_reg_write <= 1'b0;
+            if_pc_jump <= 1'b0;
+            // TODO: exception
+        end
+        endcase
+    end
+    
+    6'b010000: begin
+        // COP0
+        case (jpc[25:21])
+        5'b00100: begin
+            // MTC0
             bubble_cnt <= bubble_cnt_dec;
             ex_stopcnt <= ex_stopcnt_dec;
             if_pc_jump <= 1'b0;
             if_forward_reg_write <= 1'b0;
-            // TODO: exception
         end
+        5'b0000: begin
+            // MFC0
+            result <= cp0[jpc[15:11]];
+            bubble_cnt <= bubble_cnt_dec;
+            ex_stopcnt <= ex_stopcnt_dec;
+            if_pc_jump <= 1'b0;
+            if_forward_reg_write <= ~ex_stop;
+        end
+        default: begin
+            bubble_cnt <= bubble_cnt_dec;
+            ex_stopcnt <= ex_stopcnt_dec;
+            if_pc_jump <= 1'b0;
+            if_forward_reg_write <= 1'b0;
+        end
+        endcase
+    end
+    
+    6'b001000: begin
+        // ADDI
+        // TODO: 异常
+        bubble_cnt <= bubble_cnt_dec;
+        ex_stopcnt <= ex_stopcnt_dec;
+        if_pc_jump <= 1'b0;
+        result <= data_a + simm;
+        if_forward_reg_write <= ~ex_stop;
+    end
+    
+    6'b001001: begin
+        // ADDIU
+        bubble_cnt <= bubble_cnt_dec;
+        ex_stopcnt <= ex_stopcnt_dec;
+        if_pc_jump <= 1'b0;
+        result <= data_a + simm;
+        if_forward_reg_write <= ~ex_stop;
+    end
+    
+    6'b001100: begin
+        // ANDI
+        bubble_cnt <= bubble_cnt_dec;
+        ex_stopcnt <= ex_stopcnt_dec;
+        if_pc_jump <= 1'b0;
+        result <= data_a & zimm;
+        if_forward_reg_write <= ~ex_stop;
+    end
+    
+    6'b001101: begin
+        // ORI
+        bubble_cnt <= bubble_cnt_dec;
+        ex_stopcnt <= ex_stopcnt_dec;
+        if_pc_jump <= 1'b0;
+        result <= data_a | zimm;
+        if_forward_reg_write <= ~ex_stop;
+    end
+    
+    6'b001110: begin
+        // XORI
+        bubble_cnt <= bubble_cnt_dec;
+        ex_stopcnt <= ex_stopcnt_dec;
+        if_pc_jump <= 1'b0;
+        result <= data_a ^ zimm;
+        if_forward_reg_write <= ~ex_stop;
+    end
+    
+    6'b001010: begin
+        // SLTI
+        bubble_cnt <= bubble_cnt_dec;
+        ex_stopcnt <= ex_stopcnt_dec;
+        if_pc_jump <= 1'b0;
+        result <= ($signed(data_a) < $signed(simm));
+        if_forward_reg_write <= ~ex_stop;
+    end
+    
+    6'b001011: begin
+        // SLTIU
+        bubble_cnt <= bubble_cnt_dec;
+        ex_stopcnt <= ex_stopcnt_dec;
+        if_pc_jump <= 1'b0;
+        result <= data_a < simm ? 32'h00000001 : 32'h00000000;
+        if_forward_reg_write <= ~ex_stop;
+    end
+    
+    6'b001111: begin
+        // LUI
+        bubble_cnt <= bubble_cnt_dec;
+        ex_stopcnt <= ex_stopcnt_dec;
+        if_pc_jump <= 1'b0;
+        result <= (zimm << 16);
+        if_forward_reg_write <= ~ex_stop;
+    end
+    
+    6'b000010: begin
+        // J
+        bubble_cnt <= bubble_cnt_dec;
+        ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b010;
+        if_pc_jump <= ~ex_stop;
+        pc_jumpto <= {npc[31:28], jpc, 2'b00}; // <<2
+        if_forward_reg_write <= 1'b0;
+    end
+    
+    6'b000011: begin
+        // JAL
+        result <= npc + 32'd4;
+        bubble_cnt <= bubble_cnt_dec;
+        ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b010;
+        if_pc_jump <= ~ex_stop;
+        pc_jumpto <= {npc[31:28], jpc, 2'b00}; // <<2
+        if_forward_reg_write <= ~ex_stop;
+    end
+            
+    6'b000100: begin
+        // BEQ
+        bubble_cnt <= bubble_cnt_dec;
+        pc_jumpto <= npc + {simm[29:0], 2'b00};
+        if_forward_reg_write <= 1'b0;
+        if (data_a == data_b) begin
+            ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b010; // clear backward
+            if_pc_jump <= ~ex_stop;
+        end
+        else begin
+            ex_stopcnt <= ex_stopcnt_dec; // dont stap
+            if_pc_jump <= 1'b0;
+        end
+    end
+    
+    6'b000101: begin
+        // BNE
+        bubble_cnt <= bubble_cnt_dec;
+        pc_jumpto <= npc + {simm[29:0], 2'b00};
+        if_forward_reg_write <= 1'b0;
+        if (data_a != data_b) begin
+            ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b010; // clear backward
+            if_pc_jump <= ~ex_stop;
+        end
+        else begin
+            ex_stopcnt <= ex_stopcnt_dec; // dont stap
+            if_pc_jump <= 1'b0;
+        end
+    end
+    
+    6'b000111: begin
+        // BGTZ
+        bubble_cnt <= bubble_cnt_dec;
+        pc_jumpto <= npc + {simm[29:0], 2'b00};
+        if_forward_reg_write <= 1'b0;
+        if ($signed(data_a) > $signed(data_b)) begin // signed(A) > signed(B)
+            ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b010; // clear backward
+            if_pc_jump <= ~ex_stop;
+        end
+        else begin
+            ex_stopcnt <= ex_stopcnt_dec; // dont stap
+            if_pc_jump <= 1'b0;
+        end
+    end
+    
+    6'b000110: begin
+        // BLEZ
+        bubble_cnt <= bubble_cnt_dec;
+        pc_jumpto <= npc + {simm[29:0], 2'b00};
+        if_forward_reg_write <= 1'b0;
+        if ($signed(data_a) <= $signed(data_b)) begin // signed(A) <= signed(B)
+            ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b010; // clear backward
+            if_pc_jump <= ~ex_stop;
+        end
+        else begin
+            ex_stopcnt <= ex_stopcnt_dec; // dont stap
+            if_pc_jump <= 1'b0;
+        end
+    end
+    
+    6'b000001: begin
+        // REGIMM
+        bubble_cnt <= bubble_cnt_dec;
+        pc_jumpto <= npc + {simm[29:0], 2'b00};
+        result <= npc + 32'd4;
+        case (jpc[20:16]) // ins[20:16]
+        5'b00000, 5'b10000: begin
+            // BLTZ(AL)
+            if_forward_reg_write <= (~ex_stop) & jpc[20];
+            if (data_a[31]) begin // signed(A) < 0
+                ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b010; // clear backward
+                if_pc_jump <= ~ex_stop;
+            end
+            else begin
+                ex_stopcnt <= ex_stopcnt_dec; // dont stap
+                if_pc_jump <= 1'b0;
+            end
+        end
+        5'b00001, 5'b10001: begin
+            // BGEZ(AL)
+            if_forward_reg_write <= (~ex_stop) & jpc[20];
+            if (~data_a[31]) begin // signed(A) >= 0
+                ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b010; // clear backward
+                if_pc_jump <= ~ex_stop;
+            end
+            else begin
+                ex_stopcnt <= ex_stopcnt_dec; // dont stap
+                if_pc_jump <= 1'b0;
+            end
+        end
+        default: begin
+            ex_stopcnt <= ex_stopcnt_dec;
+            if_forward_reg_write <= 1'b0;
+            if_pc_jump <= 1'b0;
+        end
+        endcase
+    end
+    
+    6'b100011: begin
+        // LW
+        result <= sl_addr;
+        bubble_cnt <= ex_stop ? bubble_cnt_dec : 3'b001; // IF/ID/EX stop
+        ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b001; // R/W conflict
+        if_pc_jump <= 1'b0;
+        if_forward_reg_write <= 1'b0;
+    end
+    
+    6'b100001, 6'b100101: begin
+        // LH LHU
+        load_byte <= {op[2], sl_addr[1], sl_addr[1], ~sl_addr[1], ~sl_addr[1]};
+        result <= sl_addr;
+        bubble_cnt <= ex_stop ? bubble_cnt_dec : 3'b001; // IF/ID/EX stop
+        ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b001; // R/W conflict
+        if_pc_jump <= 1'b0;
+        if_forward_reg_write <= 1'b0;
+    end
+    
+    6'b100000, 6'b100100: begin
+        // LB LBU
+        load_byte <= {op[2],
+            sl_addr[1] & sl_addr[0], sl_addr[1] & ~sl_addr[0],
+            ~sl_addr[1] & sl_addr[0], ~sl_addr[1] & ~sl_addr[0]};
+        result <= sl_addr;
+        bubble_cnt <= ex_stop ? bubble_cnt_dec : 3'b001; // IF/ID/EX stop
+        ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b001; // R/W conflict
+        if_pc_jump <= 1'b0;
+        if_forward_reg_write <= 1'b0;
+    end
+    
+    6'b101011: begin
+        // SW
+        result <= sl_addr;
+        mem_data <= data_b; // write mem
+        bubble_cnt <= ex_stop ? bubble_cnt_dec : 3'b001; // IF/ID/EX stop
+        ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b001;
+        if_pc_jump <= 1'b0;
+        if_forward_reg_write <= 1'b0;
+    end
+    
+    6'b101001: begin
+        // SH
+        load_byte <= {1'b0, sl_addr[1], sl_addr[1], ~sl_addr[1], ~sl_addr[1]};
+        result <= sl_addr;
+        mem_data <= data_b; // write mem
+        bubble_cnt <= ex_stop ? bubble_cnt_dec : 3'b001; // IF/ID/EX stop
+        ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b001;
+        if_pc_jump <= 1'b0;
+        if_forward_reg_write <= 1'b0;
+    end
+    
+    6'b101000: begin
+        // SB
+        load_byte <= {1'b0,
+            sl_addr[1] & sl_addr[0], sl_addr[1] & ~sl_addr[0],
+            ~sl_addr[1] & sl_addr[0], ~sl_addr[1] & ~sl_addr[0]};
+        result <= sl_addr;
+        mem_data <= data_b; // write mem
+        bubble_cnt <= ex_stop ? bubble_cnt_dec : 3'b001; // IF/ID/EX stop
+        ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b001;
+        if_pc_jump <= 1'b0;
+        if_forward_reg_write <= 1'b0;
+    end
+
+    default: begin
+        // unknown
+        bubble_cnt <= bubble_cnt_dec;
+        ex_stopcnt <= ex_stopcnt_dec;
+        if_pc_jump <= 1'b0;
+        if_forward_reg_write <= 1'b0;
+        // TODO: exception
+    end
     endcase
+end
+
+always@(posedge clk or negedge rst) begin
+    if (!rst) begin
+        hi <= 32'b0;
+        lo <= 32'b0;
+        cp0[0] <= 32'b0;
+        cp0[1] <= 32'b0;
+        cp0[2] <= 32'b0;
+        cp0[3] <= 32'b0;
+        cp0[4] <= 32'b0;
+        cp0[5] <= 32'b0;
+        cp0[6] <= 32'b0;
+        cp0[7] <= 32'b0;
+        cp0[8] <= 32'b0;
+        cp0[9] <= 32'b0;
+        cp0[10] <= 32'b0;
+        cp0[11] <= 32'b0;
+        cp0[12] <= 32'b0;
+        cp0[13] <= 32'b0;
+        cp0[14] <= 32'b0;
+        cp0[15] <= 32'b0;
+        cp0[16] <= 32'b0;
+        cp0[17] <= 32'b0;
+        cp0[18] <= 32'b0;
+        cp0[19] <= 32'b0;
+        cp0[20] <= 32'b0;
+        cp0[21] <= 32'b0;
+        cp0[22] <= 32'b0;
+        cp0[23] <= 32'b0;
+        cp0[24] <= 32'b0;
+        cp0[25] <= 32'b0;
+        cp0[26] <= 32'b0;
+        cp0[27] <= 32'b0;
+        cp0[28] <= 32'b0;
+        cp0[29] <= 32'b0;
+        cp0[30] <= 32'b0;
+        cp0[31] <= 32'b0;
+    end
+    else begin
+        case (op)
+        6'b000000:
+            case (func)
+            6'b010001: hi <= data_a;
+            6'b010011: lo <= data_a;
+            endcase
+        6'b010000:
+            if (jpc[25:21] == 5'b00100)
+                cp0[jpc[15:11]] <= data_b;
+        endcase
+    end
 end
 
 endmodule

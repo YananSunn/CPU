@@ -1,3 +1,5 @@
+parameter EX_ADDR_INIT = 32'h80001180;
+
 module MMU(
     input wire clk,
     
@@ -5,7 +7,7 @@ module MMU(
     input wire if_write,
     input wire[31:0] addr,
     input wire[31:0] input_data,
-    input wire bytemode,
+    input wire[4:0] bytemode,
     output reg[31:0] output_data = 32'h00000000,
     
     inout wire[31:0] base_ram_data,
@@ -34,7 +36,7 @@ module MMU(
     
 reg oe1 = 1'b1, we1 = 1'b1, ce1 = 1'b1;
 reg oe2 = 1'b1, we2 = 1'b1, ce2 = 1'b1;
-reg[3:0] be = 4'b0000;
+wire[3:0] be = ~bytemode[3:0];
 reg[31:0] ram_write_data = 32'h00000000;
 reg wrn = 1'b1, rdn = 1'b1;
 
@@ -79,14 +81,12 @@ always @(*) begin
                 ce2 <= 1'b1;
                 rdn <= 1'b1;
                 wrn <= 1'b1;
-                be <= 1'h0;
                 output_data <= 32'h00000000;
                 ram_write_data <= 32'h00000000;
             end
             32'hBFD003F8: begin
                 ce1 <= 1'b1;
                 ce2 <= 1'b1;
-                be <= 1'h0;
                 if (if_read) begin
                     rdn <= 1'b0;
                     wrn <= 1'b1;
@@ -109,7 +109,6 @@ always @(*) begin
             32'hBFD003FC: begin
                 ce1 <= 1'b1;
                 ce2 <= 1'b1;
-                be <= 1'h0;
                 if (if_read) begin
                     rdn <= 1'b1;
                     wrn <= 1'b1;
@@ -135,70 +134,42 @@ always @(*) begin
                 rdn <= 1'b1;
                 wrn <= 1'b1;
                 if (if_read) begin
-                    if (bytemode) begin
-                        case (addr[1:0])
-                            2'b11: begin
-                                output_data <= {{24{ram_read_data[31]}}, ram_read_data[31:24]};
-                                be <= 4'b0111;
-                            end
-                            2'b10: begin
-                                output_data <= {{24{ram_read_data[23]}}, ram_read_data[23:16]};
-                                be <= 4'b1011;
-                            end
-                            2'b01: begin
-                                output_data <= {{24{ram_read_data[15]}}, ram_read_data[15:8]};
-                                be <= 4'b1101;
-                            end
-                            2'b00: begin
-                                output_data <= {{24{ram_read_data[7]}}, ram_read_data[7:0]};
-                                be <= 4'b1110;
-                            end
-                            default: begin
-                                output_data <= ram_read_data;
-                                be <= 4'b0000;
-                            end
-                        endcase
-                    end
-                    else begin
-                        output_data <= ram_read_data;
-                        be <= 4'b0000;
-                    end
+                    case (bytemode)
+                        5'b01000: output_data <= {{24{ram_read_data[31]}}, ram_read_data[31:24]};
+                        5'b11000: output_data <= {24'h000000, ram_read_data[31:24]};
+                        5'b00100: output_data <= {{24{ram_read_data[23]}}, ram_read_data[23:16]};
+                        5'b10100: output_data <= {24'h000000, ram_read_data[23:16]};
+                        5'b00010: output_data <= {{24{ram_read_data[15]}}, ram_read_data[15:8]};
+                        5'b10010: output_data <= {24'h000000, ram_read_data[15:8]};
+                        5'b00001: output_data <= {{24{ram_read_data[7]}}, ram_read_data[7:0]};
+                        5'b10001: output_data <= {24'h000000, ram_read_data[7:0]};
+                        
+                        5'b01100: output_data <= {{16{ram_read_data[31]}}, ram_read_data[31:16]};
+                        5'b11100: output_data <= {16'h0000, ram_read_data[31:16]};
+                        5'b00011: output_data <= {{16{ram_read_data[15]}}, ram_read_data[15:0]};
+                        5'b10011: output_data <= {16'h0000, ram_read_data[15:0]};
+                        
+                        default: output_data <= ram_read_data;
+                    endcase
                 end
                 else if (if_write) begin
                     output_data <= 32'h00000000;
-                    if (bytemode) begin
-                        case (addr[1:0])
-                            2'b11: begin
-                                ram_write_data <= {input_data[7:0], 24'b0};
-                                be <= 4'b0111;
-                            end
-                            2'b10: begin
-                                ram_write_data <= {8'b0, input_data[7:0], 16'b0};
-                                be <= 4'b1011;
-                            end
-                            2'b01: begin
-                                ram_write_data <= {16'b0, input_data[7:0], 8'b0};
-                                be <= 4'b1101;
-                            end
-                            2'b00: begin
-                                ram_write_data <= {24'b0, input_data[7:0]};
-                                be <= 4'b1110;
-                            end
-                            default: begin
-                                ram_write_data <= input_data;
-                                be <= 4'b0000;
-                            end
-                        endcase
-                    end
-                    else begin
-                        ram_write_data <= input_data;
-                        be <= 4'b0000; 
-                    end
+                    case (bytemode[3:0])
+                        4'b1000: ram_write_data <= {input_data[7:0], 24'h000000};
+                        4'b0100: ram_write_data <= {8'h00, input_data[7:0], 16'h0000};
+                        4'b0010: ram_write_data <= {16'h0000, input_data[7:0], 8'h00};
+                        4'b0001: ram_write_data <= {24'h000000, input_data[7:0]};
+                        
+                        4'b1100: ram_write_data <= {input_data[15:0], 16'h0000};
+                        4'b0011: ram_write_data <= {16'h0000, input_data[15:0]};
+                        
+                        4'b1111: ram_write_data <= input_data;
+                        default: ram_write_data <= input_data;
+                    endcase
                 end
                 else begin
                     output_data <= 32'h00000000;
                     ram_write_data <= 32'h00000000;
-                    be <= 4'b0000;
                 end
             end
         endcase
@@ -213,7 +184,6 @@ always @(*) begin
         we2 <= 1'b1;
         rdn <= 1'b1;
         wrn <= 1'b1;
-        be <= 4'b0000;
         output_data <= 32'h00000000;
         ram_write_data <= 32'h00000000;
     end
@@ -222,8 +192,8 @@ end
 always@ (posedge clk) begin
     if (if_write) begin
         case (addr)
-        32'hBFD00400: leds <= input_data[15:0];
-        32'hBFD00408: dpys <= input_data[7:0];
+            32'hBFD00400: leds <= input_data[15:0];
+            32'hBFD00408: dpys <= input_data[7:0];
         endcase
     end
 end

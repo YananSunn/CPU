@@ -47,113 +47,48 @@ always@(*) begin
     data_write_reg <= 5'b00000;
     
     case (ins[31:26])
-        // list all operations        
         // R型
         6'b000000: begin
-        // SPECAL (ADD, SUB, ..., JR)
+        // SPECAL (ADD, SUB, ..., JR, JALR)
             if_reg_write <= 1'b0; // 在旁路单元中写回
             if_mem_read <= 1'b0;
             if_mem_write <= 1'b0;
             data_write_reg <= ins[15:11];
         end
         
-        // I型
-        6'b001000: begin
-        // ADDI
+        6'b010000: begin
+        // COP0
             if_reg_write <= 1'b0; // 在旁路单元中写回
             if_mem_read <= 1'b0;
             if_mem_write <= 1'b0;
             data_write_reg <= ins[20:16];
         end
-        6'b001001: begin
-        // ADDIU
+        
+        6'b001000, 6'b001001, 6'b001100, 6'b001101, 6'b001110, 6'b001111, 6'b001010, 6'b001011: begin
+        // ADDI ADDIU ANDI ORI ORI LUI SLTI SLTIU
             if_reg_write <= 1'b0; // 在旁路单元中写回
             if_mem_read <= 1'b0;
             if_mem_write <= 1'b0;
             data_write_reg <= ins[20:16];
         end
-        6'b001100: begin
-        // ANDI
-            if_reg_write <= 1'b0; // 在旁路单元中写回
-            if_mem_read <= 1'b0;
-            if_mem_write <= 1'b0;
-            data_write_reg <= ins[20:16];
-        end
-        6'b001101: begin
-        // ORI
-            if_reg_write <= 1'b0; // 在旁路单元中写回
-            if_mem_read <= 1'b0;
-            if_mem_write <= 1'b0;
-            data_write_reg <= ins[20:16];
-        end
-        6'b001110: begin
-        // XORI
-            if_reg_write <= 1'b0; // 在旁路单元中写回
-            if_mem_read <= 1'b0;
-            if_mem_write <= 1'b0;
-            data_write_reg <= ins[20:16];
-        end
-        6'b001111: begin
-        // LUI
-            if_reg_write <= 1'b0; // 在旁路单元中写回
-            if_mem_read <= 1'b0;
-            if_mem_write <= 1'b0;
-            data_write_reg <= ins[20:16];
-        end
-        6'b000100: begin
-        // BEQ
-            if_reg_write <= 1'b0;
-            if_mem_read <= 1'b0;
-            if_mem_write <= 1'b0;
-        end
-        6'b000101: begin
-        // BNE
-            if_reg_write <= 1'b0;
-            if_mem_read <= 1'b0;
-            if_mem_write <= 1'b0;
-        end
-        6'b000111: begin
-        // BGTZ
-            if_reg_write <= 1'b0;
-            if_mem_read <= 1'b0;
-            if_mem_write <= 1'b0;
-        end
-        6'b100011: begin
-        // LW
+        
+        6'b100011, 6'b100001, 6'b100101, 6'b100000, 6'b100100: begin
+        // LW LH LHU LB LBU
             if_reg_write <= 1'b1;
             if_mem_read <= 1'b1;
             if_mem_write <= 1'b0;
             data_write_reg <= ins[20:16];
         end
-        6'b100000: begin
-        // LB
-            if_reg_write <= 1'b1;
-            if_mem_read <= 1'b1;
-            if_mem_write <= 1'b0;
-            data_write_reg <= ins[20:16];
-        end
-        6'b101011: begin
-        // SW
-            if_reg_write <= 1'b0;
-            if_mem_read <= 1'b0;
-            if_mem_write <= 1'b1;
-        end
-        6'b101000: begin
-        // SB
+        
+        6'b101011, 6'b101001, 6'b101000: begin
+        // SW SH SB
             if_reg_write <= 1'b0;
             if_mem_read <= 1'b0;
             if_mem_write <= 1'b1;
         end
         
-        // J型
-        6'b000010: begin
-        // J
-            if_reg_write <= 1'b0;
-            if_mem_read <= 1'b0;
-            if_mem_write <= 1'b0;
-        end
-        6'b000011: begin
-        // JAL
+        6'b000011, 6'b000001: begin
+        // JAL / BLTZ / BGEZ / BLTZAL / BGEZAL
             if_reg_write <= 1'b0; // 在旁路单元中写回
             if_mem_read <= 1'b0;
             if_mem_write <= 1'b0;
@@ -161,7 +96,7 @@ always@(*) begin
         end
         
         default: begin
-        // unknown/init
+        // BEQ / BNE / BGTZ / BLEZ / J / unknown
             if_reg_write <= 1'b0;
             if_mem_read <= 1'b0;
             if_mem_write <= 1'b0;

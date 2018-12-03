@@ -225,10 +225,10 @@ always@(posedge clk or negedge rst) begin
 end
 
 // EX/MEM пе╨е
-wire ex_mem_i_ifregwrite    , ex_mem_i_ifmemread    , ex_mem_i_ifmemwrite    , ex_mem_i_loadbyte;
-reg  ex_mem_o_ifregwrite = 0, ex_mem_o_ifmemread = 0, ex_mem_o_ifmemwrite = 0, ex_mem_o_loadbyte;
-wire[4:0] ex_mem_i_regwrite;
-reg [4:0] ex_mem_o_regwrite;
+wire ex_mem_i_ifregwrite    , ex_mem_i_ifmemread    , ex_mem_i_ifmemwrite    ;
+reg  ex_mem_o_ifregwrite = 0, ex_mem_o_ifmemread = 0, ex_mem_o_ifmemwrite = 0;
+wire[4:0] ex_mem_i_regwrite, ex_mem_i_loadbyte;
+reg [4:0] ex_mem_o_regwrite, ex_mem_o_loadbyte;
 wire[31:0] ex_mem_i_res, ex_mem_i_memwrite;
 reg [31:0] ex_mem_o_res, ex_mem_o_memwrite;
 /*
@@ -237,6 +237,9 @@ wire[31:0] ex_if_s_pcjumpto;
 */
 
 EX ex_instance(
+    .clk(clk),
+    .rst(rst),
+
     // input
     .op(id_ex_o_op),
     .func(id_ex_o_func),
@@ -323,7 +326,7 @@ MEM mem_instance(
 
 // MMU MUX
 wire mmu_ifmem = ex_mem_o_ifmemread | ex_mem_o_ifmemwrite;
-wire mmu_bytemode = mmu_ifmem ? ex_mem_o_loadbyte : 1'b0;
+wire[4:0] mmu_bytemode = mmu_ifmem ? ex_mem_o_loadbyte : 5'b01111;
 assign mmu_read_wire = mmu_ifmem ? ex_mem_o_ifmemread : 1'b1;
 assign mmu_write_wire = mmu_ifmem ? ex_mem_o_ifmemwrite : 1'b0;
 assign mmu_addr_wire = mmu_ifmem ? ex_mem_o_res : if_imaddr;
