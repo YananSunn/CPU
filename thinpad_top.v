@@ -106,6 +106,10 @@ reg [31:0] mmu_addr; // MMU地址/数据
 // 反向传递信号
 wire ex_if_bubble, ex_reg_bubble, ex_if_ifpcjump;
 wire ex_ex_i_delayslot;
+wire ex_ex_i_exc;
+reg  ex_ex_o_exc = 1'b0;
+wire[4:0] ex_ex_i_ex_cause;
+reg [4:0] ex_ex_o_ex_cause;
 wire[2:0] ex_ex_i_bubblecnt         , ex_ex_i_stopcnt         ;
 reg [2:0] ex_ex_o_bubblecnt = 3'b000, ex_ex_o_stopcnt = 3'b011; // stop the inital commands
 wire[31:0] ex_if_pcjumpto;
@@ -198,13 +202,16 @@ always@(posedge clk or negedge rst) begin
         id_ex_o_ifmemwrite <= 0;
         ex_ex_o_bubblecnt <= 3'b000;
         ex_ex_o_stopcnt <= 3'b011;
+        ex_ex_o_exc <= 1'b0;
     end
     else begin
         ex_ex_o_bubblecnt <= ex_ex_i_bubblecnt;
         ex_ex_o_stopcnt <= ex_ex_i_stopcnt;
+        ex_ex_o_exc <= ex_ex_i_exc;
+        ex_ex_o_ex_cause <= ex_ex_i_ex_cause;
     
         if (!ex_reg_bubble) begin
-            id_ex_exstop <= (~ex_ex_i_delayslot) & (ex_ex_i_stopcnt != 0);
+            id_ex_exstop <= (~ex_ex_i_delayslot | ex_ex_i_exc) & (ex_ex_i_stopcnt != 0);
             id_ex_o_npc <= id_ex_i_npc;
             id_ex_o_ifregwrite <= id_ex_i_ifregwrite;
             id_ex_o_ifmemread <= id_ex_i_ifmemread;
@@ -231,10 +238,6 @@ wire[4:0] ex_mem_i_regwrite, ex_mem_i_loadbyte;
 reg [4:0] ex_mem_o_regwrite, ex_mem_o_loadbyte;
 wire[31:0] ex_mem_i_res, ex_mem_i_memwrite;
 reg [31:0] ex_mem_o_res, ex_mem_o_memwrite;
-/*
-wire ex_if_s_ifpcjump;
-wire[31:0] ex_if_s_pcjumpto;
-*/
 
 EX ex_instance(
     .clk(clk),
@@ -256,12 +259,17 @@ EX ex_instance(
     .if_mem_write_i(id_ex_o_ifmemwrite),
     .data_write_reg_i(id_ex_o_regwrite),
     
+    // ex
+    .if_dealing_ex(ex_ex_o_exc),
+    .dealing_ex_cause(ex_ex_o_ex_cause),
+    
     // foobar
     .bubble_cnt_last(ex_ex_o_bubblecnt),
     .ex_stopcnt_last(ex_ex_o_stopcnt),
     .bubble_cnt(ex_ex_i_bubblecnt),
     .ex_stopcnt(ex_ex_i_stopcnt),
     .delay_slot(ex_ex_i_delayslot),
+    .exception(ex_ex_i_exc),
         
     // output
     .result(ex_mem_i_res),
@@ -275,7 +283,6 @@ EX ex_instance(
     .if_mem_write_o(ex_mem_i_ifmemwrite),
     
     .if_forward_reg_write(ex_id_f_ifregwrite),
-    
     .data_write_reg_o(ex_mem_i_regwrite)
 );
 

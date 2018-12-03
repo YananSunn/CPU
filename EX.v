@@ -1,3 +1,5 @@
+parameter EX_ADDR_INIT = 32'h80001180;
+
 module EX(
     input wire clk,
     input wire rst,
@@ -23,6 +25,8 @@ module EX(
     output reg[2:0] bubble_cnt,
     output reg[2:0] ex_stopcnt,
     output wire delay_slot,
+    output reg exception,
+    output reg[5:0] ex_cause,
     
     output reg if_forward_reg_write,
     
@@ -34,14 +38,25 @@ module EX(
     input wire if_mem_write_i,
     output reg if_mem_write_o,
     input wire[4:0] data_write_reg_i,
-    output reg[4:0] data_write_reg_o
+    output reg[4:0] data_write_reg_o,
+    
+    //ex
+    input wire if_dealing_ex,
+    input wire[4:0] dealing_ex_cause
     );
 
 reg[2:0] bubble_cnt_dec, ex_stopcnt_dec;
 assign delay_slot = if_pc_jump;
 
+parameter BVA = 8;
+parameter STATUS = 12;
+parameter CAUSE = 13;
+parameter EPC = 14;
 reg [31:0] hi, lo, cp0[0:31];
 wire[31:0] sl_addr = data_a + simm;
+
+reg [31:0] bad_addr;
+reg last_ds, after_last_ds;
 
 always @(*) begin
     // passes
@@ -54,12 +69,14 @@ always @(*) begin
     ex_stopcnt_dec = ex_stopcnt_last ? ex_stopcnt_last - 3'b001 : 3'b000;
     
     mem_data <= data_b;
-    /*
-    find conflicts and pause
-    */
+    
     result <= 32'h00000000; // avoid latches
     pc_jumpto <= 32'h00000000; // avoid latches
     load_byte <= 5'b01111;
+    
+    exception <= 1'b0;
+    ex_cause <=  5'b00000;
+    bad_addr <= 32'h00000000;
     
     // ALU
     case (op)
@@ -68,7 +85,7 @@ always @(*) begin
         case (func)
         6'b100000: begin
         // ADD
-        // TODO: 异常
+        // TODO: 算术异常
             result <= data_a + data_b;
             bubble_cnt <= bubble_cnt_dec;
             ex_stopcnt <= ex_stopcnt_dec;
@@ -87,7 +104,7 @@ always @(*) begin
         
         6'b100010: begin
         // SUB
-        // TODO: 异常
+        // TODO: 算术异常
             result <= data_a - data_b;
             bubble_cnt <= bubble_cnt_dec;
             ex_stopcnt <= ex_stopcnt_dec;
@@ -257,12 +274,37 @@ always @(*) begin
             if_pc_jump <= 1'b0;
         end
         
-        default: begin
-            bubble_cnt <= bubble_cnt_dec;
-            ex_stopcnt <= ex_stopcnt_dec;
+        6'b001100: begin
+        // SYSCALL
+            ex_cause <= 5'd8;
+            bubble_cnt <= 3'b000;
+            ex_stopcnt <= 3'b010;
             if_forward_reg_write <= 1'b0;
-            if_pc_jump <= 1'b0;
-            // TODO: exception
+            if_pc_jump <= 1'b1;
+            exception <= 1'b1;
+            pc_jumpto <= EX_ADDR_INIT;
+        end
+        
+        6'b001101: begin
+        // BREAK
+            ex_cause <= 5'd9;
+            bubble_cnt <= 3'b000;
+            ex_stopcnt <= 3'b010;
+            if_forward_reg_write <= 1'b0;
+            if_pc_jump <= 1'b1;
+            exception <= 1'b1;
+            pc_jumpto <= EX_ADDR_INIT;
+        end
+        
+        default: begin
+            // exception
+            ex_cause <= 5'd10;
+            bubble_cnt <= 3'b000;
+            ex_stopcnt <= 3'b010;
+            if_forward_reg_write <= 1'b0;
+            if_pc_jump <= 1'b1;
+            exception <= 1'b1;
+            pc_jumpto <= EX_ADDR_INIT;
         end
         endcase
     end
@@ -284,6 +326,22 @@ always @(*) begin
             ex_stopcnt <= ex_stopcnt_dec;
             if_pc_jump <= 1'b0;
             if_forward_reg_write <= ~ex_stop;
+        end
+        5'b10000: begin
+            if (func == 6'b011000) begin
+            // ERET
+                bubble_cnt <= bubble_cnt_dec;
+                ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b010;
+                if_pc_jump <= ~ex_stop;
+                pc_jumpto <= cp0[EPC]; // <<2
+                if_forward_reg_write <= 1'b0;
+            end
+            else begin
+                bubble_cnt <= bubble_cnt_dec;
+                ex_stopcnt <= ex_stopcnt_dec;
+                if_pc_jump <= 1'b0;
+                if_forward_reg_write <= 1'b0;
+            end
         end
         default: begin
             bubble_cnt <= bubble_cnt_dec;
@@ -477,9 +535,14 @@ always @(*) begin
             end
         end
         default: begin
-            ex_stopcnt <= ex_stopcnt_dec;
+            // exception
+            ex_cause <= 5'd10;
+            bubble_cnt <= 3'b000;
+            ex_stopcnt <= 3'b010;
             if_forward_reg_write <= 1'b0;
-            if_pc_jump <= 1'b0;
+            if_pc_jump <= 1'b1;
+            exception <= 1'b1;
+            pc_jumpto <= EX_ADDR_INIT;
         end
         endcase
     end
@@ -550,12 +613,14 @@ always @(*) begin
     end
 
     default: begin
-        // unknown
-        bubble_cnt <= bubble_cnt_dec;
-        ex_stopcnt <= ex_stopcnt_dec;
-        if_pc_jump <= 1'b0;
+        // exception 保留指令
+        ex_cause <= 5'd10;
+        bubble_cnt <= 3'b000;
+        ex_stopcnt <= 3'b010;
         if_forward_reg_write <= 1'b0;
-        // TODO: exception
+        if_pc_jump <= 1'b1;
+        exception <= 1'b1;
+        pc_jumpto <= EX_ADDR_INIT;
     end
     endcase
 end
@@ -576,10 +641,10 @@ always@(posedge clk or negedge rst) begin
         cp0[9] <= 32'b0;
         cp0[10] <= 32'b0;
         cp0[11] <= 32'b0;
-        cp0[12] <= 32'b0;
-        cp0[13] <= 32'b0;
-        cp0[14] <= 32'b0;
-        cp0[15] <= 32'b0;
+        cp0[12] <= 32'h0000FA01; // status
+        cp0[13] <= 32'b0; // cause
+        cp0[14] <= 32'b0; // epc
+        cp0[15] <= 32'h80001000; // ebase
         cp0[16] <= 32'b0;
         cp0[17] <= 32'b0;
         cp0[18] <= 32'b0;
@@ -598,16 +663,31 @@ always@(posedge clk or negedge rst) begin
         cp0[31] <= 32'b0;
     end
     else begin
-        case (op)
+        if (if_dealing_ex) begin
+            cp0[CAUSE][6:2] <= dealing_ex_cause; // cause: ExcCode
+            cp0[CAUSE][31] <= after_last_ds; // cause:BD
+            cp0[STATUS][1] <= 1; // status:EXL
+            if (dealing_ex_cause == 5'd4 || dealing_ex_cause == 5'd5)
+                cp0[BVA] <= bad_addr; // BVA
+            cp0[EPC] <= npc - 32'd4; // EPC
+            // TODO cause:IP4
+        end
+        else case (op)
         6'b000000:
             case (func)
             6'b010001: hi <= data_a;
             6'b010011: lo <= data_a;
             endcase
-        6'b010000:
+        6'b010000: begin
             if (jpc[25:21] == 5'b00100)
                 cp0[jpc[15:11]] <= data_b;
+            if (func == 6'b011000) // ERET
+                cp0[STATUS][1] <= 0; // status:EXL
+        end
         endcase
+        
+        last_ds <= delay_slot;
+        after_last_ds <= last_ds;
     end
 end
 

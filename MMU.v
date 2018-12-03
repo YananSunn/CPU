@@ -1,5 +1,3 @@
-parameter EX_ADDR_INIT = 32'h80001180;
-
 module MMU(
     input wire clk,
     
