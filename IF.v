@@ -1,4 +1,4 @@
-parameter IM_ADDR_INIT = 32'h80001180;
+parameter IM_ADDR_INIT = 32'h80000000;
 `define pc im_addr
 
 module IF(
