@@ -29,7 +29,16 @@ module MMU(
     input wire uart_tsre,
     
     output wire[15:0] debug_leds,
-    output wire[7:0] debug_dpys
+    output wire[7:0] debug_dpys,
+    
+    //图像输出信号
+    output wire[2:0] video_red,    //红色像素，3位
+    output wire[2:0] video_green,  //绿色像素，3位
+    output wire[1:0] video_blue,   //蓝色像素，2位
+    output wire video_hsync,       //行同步（水平同步）信号
+    output wire video_vsync,       //场同步（垂直同步）信号
+    output wire video_clk,         //像素时钟输出
+    output wire video_de           //行数据有效信号，用于区分消隐区
     );
     
 reg oe1 = 1'b1, we1 = 1'b1, ce1 = 1'b1;
@@ -186,13 +195,44 @@ always @(*) begin
     end
 end
 
+reg [19199:0] signal_input;
+wire[4:0] s_x = addr[11:7];
+wire[6:0] s_y = addr[6:0];
+
+reg [31:0] char_pos = 32'h00000000;
+
 always@ (posedge clk) begin
     if (if_write) begin
         case (addr)
             32'hBFD00400: leds <= input_data[15:0];
             32'hBFD00408: dpys <= input_data[7:0];
+            32'hBFD01xxx: begin
+                signal_input[s_x * 640 + s_y * 8] <= input_data[0];
+                signal_input[s_x * 640 + s_y * 8 + 1] <= input_data[1];
+                signal_input[s_x * 640 + s_y * 8 + 2] <= input_data[2];
+                signal_input[s_x * 640 + s_y * 8 + 3] <= input_data[3];
+                signal_input[s_x * 640 + s_y * 8 + 4] <= input_data[4];
+                signal_input[s_x * 640 + s_y * 8 + 5] <= input_data[5];
+                signal_input[s_x * 640 + s_y * 8 + 6] <= input_data[6];
+                signal_input[s_x * 640 + s_y * 8 + 7] <= input_data[7];
+            end
+            32'hBFD02xxx: char_pos = {11'b0, s_y, 9'b0, s_x};
         endcase
     end
 end
+
+vga #(12, 800, 856, 976, 1040, 600, 637, 643, 666, 1, 1) vga800x600at75 (
+    .clk(clk),
+    .enable(1'b1),
+    .signal_input(signal_input),
+    .char_pos(char_pos),
+    .video_red(video_red),
+    .video_green(video_green),
+    .video_blue(video_blue),
+    .video_hsync(video_hsync),
+    .video_vsync(video_vsync),
+    .video_clk(video_clk),
+    .video_de(video_de)
+);
 
 endmodule

@@ -372,7 +372,16 @@ MMU mmu_instance(
     .uart_tsre(uart_tsre),
     // leds & dpy
     .debug_leds(leds),
-    .debug_dpys(dpys)
+    .debug_dpys(dpys),
+    
+    // videp
+    .video_red(video_red),
+    .video_green(video_green),
+    .video_blue(video_blue),
+    .video_hsync(video_hsync),
+    .video_vsync(video_vsync),
+    .video_clk(video_clk),
+    .video_de(video_de)
 );
 
 endmodule

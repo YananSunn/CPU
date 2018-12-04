@@ -48,8 +48,9 @@ always@(*) begin
     
     case (ins[31:26])
         // R型
-        6'b000000: begin
+        6'b000000, 6'b011100: begin
         // SPECAL (ADD, SUB, ..., JR, JALR)
+        // SPECIAL2 (CLO CLZ)
             if_reg_write <= 1'b0; // 在旁路单元中写回
             if_mem_read <= 1'b0;
             if_mem_write <= 1'b0;
