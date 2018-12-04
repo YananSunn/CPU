@@ -108,8 +108,6 @@ wire ex_if_bubble, ex_reg_bubble, ex_if_ifpcjump;
 wire ex_ex_i_delayslot;
 wire ex_ex_i_exc;
 reg  ex_ex_o_exc = 1'b0;
-wire[4:0] ex_ex_i_ex_cause;
-reg [4:0] ex_ex_o_ex_cause;
 wire[2:0] ex_ex_i_bubblecnt         , ex_ex_i_stopcnt         ;
 reg [2:0] ex_ex_o_bubblecnt = 3'b000, ex_ex_o_stopcnt = 3'b011; // stop the inital commands
 wire[31:0] ex_if_pcjumpto;
@@ -208,7 +206,6 @@ always@(posedge clk or negedge rst) begin
         ex_ex_o_bubblecnt <= ex_ex_i_bubblecnt;
         ex_ex_o_stopcnt <= ex_ex_i_stopcnt;
         ex_ex_o_exc <= ex_ex_i_exc;
-        ex_ex_o_ex_cause <= ex_ex_i_ex_cause;
     
         if (!ex_reg_bubble) begin
             id_ex_exstop <= (~ex_ex_i_delayslot | ex_ex_i_exc) & (ex_ex_i_stopcnt != 0);
@@ -251,8 +248,8 @@ EX ex_instance(
     .data_b(id_ex_o_data2),
     .simm(id_ex_o_signimm),
     .zimm(id_ex_o_zeroimm),
-    .jpc(id_ex_o_jpc),
     .npc(id_ex_o_npc),
+    .jpc(id_ex_o_jpc),
     
     .if_reg_write_i(id_ex_o_ifregwrite),
     .if_mem_read_i(id_ex_o_ifmemread),
@@ -261,7 +258,6 @@ EX ex_instance(
     
     // ex
     .if_dealing_ex(ex_ex_o_exc),
-    .dealing_ex_cause(ex_ex_o_ex_cause),
     
     // foobar
     .bubble_cnt_last(ex_ex_o_bubblecnt),
@@ -270,6 +266,7 @@ EX ex_instance(
     .ex_stopcnt(ex_ex_i_stopcnt),
     .delay_slot(ex_ex_i_delayslot),
     .exception(ex_ex_i_exc),
+    .if_forward_reg_write(ex_id_f_ifregwrite),
         
     // output
     .result(ex_mem_i_res),
@@ -281,8 +278,6 @@ EX ex_instance(
     .if_reg_write_o(ex_mem_i_ifregwrite),
     .if_mem_read_o(ex_mem_i_ifmemread),
     .if_mem_write_o(ex_mem_i_ifmemwrite),
-    
-    .if_forward_reg_write(ex_id_f_ifregwrite),
     .data_write_reg_o(ex_mem_i_regwrite)
 );
 
@@ -310,7 +305,7 @@ wire[4:0] mem_wb_i_regwrite;
 wire[31:0] mem_wb_i_res, mem_wb_i_memread;
 
 // forwarding unit
-assign id_ifregwrite = mem_wb_i_ifregwrite | ex_id_f_ifregwrite;
+assign id_ifregwrite = (mem_wb_i_ifregwrite & ~ex_ex_o_exc) | ex_id_f_ifregwrite;
 assign id_regwrite = mem_wb_i_ifregwrite ? mem_wb_i_regwrite : ex_mem_i_regwrite;
 assign id_regdata = mem_wb_i_ifregwrite ? (mem_wb_i_ifmemread ? mem_wb_i_memread : mem_wb_i_res) : ex_mem_i_res;
 
@@ -332,7 +327,7 @@ MEM mem_instance(
 );
 
 // MMU MUX
-wire mmu_ifmem = ex_mem_o_ifmemread | ex_mem_o_ifmemwrite;
+wire mmu_ifmem = (ex_mem_o_ifmemread | ex_mem_o_ifmemwrite) & ~ex_ex_o_exc;
 wire[4:0] mmu_bytemode = mmu_ifmem ? ex_mem_o_loadbyte : 5'b01111;
 assign mmu_read_wire = mmu_ifmem ? ex_mem_o_ifmemread : 1'b1;
 assign mmu_write_wire = mmu_ifmem ? ex_mem_o_ifmemwrite : 1'b0;

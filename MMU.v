@@ -146,7 +146,7 @@ always @(*) begin
                         5'b11100: output_data <= {16'h0000, ram_read_data[31:16]};
                         5'b00011: output_data <= {{16{ram_read_data[15]}}, ram_read_data[15:0]};
                         5'b10011: output_data <= {16'h0000, ram_read_data[15:0]};
-                        
+
                         default: output_data <= ram_read_data;
                     endcase
                 end
@@ -161,7 +161,6 @@ always @(*) begin
                         4'b1100: ram_write_data <= {input_data[15:0], 16'h0000};
                         4'b0011: ram_write_data <= {16'h0000, input_data[15:0]};
                         
-                        4'b1111: ram_write_data <= input_data;
                         default: ram_write_data <= input_data;
                     endcase
                 end

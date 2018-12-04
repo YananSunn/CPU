@@ -1,4 +1,3 @@
-parameter IM_ADDR_INIT = 32'h80000000;
 `define pc im_addr
 
 module IF(
@@ -15,12 +14,13 @@ module IF(
     input wire[31:0] im_data,
     output reg[31:0] im_addr,
     
-    output reg[31:0] npc = IM_ADDR_INIT, // pc_inital
+    output reg[31:0] npc = 32'h80000000, // pc_inital
     output reg[31:0] ins
     );
 
 reg[31:0] data_hold;
 reg if_data_hold;
+parameter IM_ADDR_INIT = 32'h80000000;
 
 // ∂¡»°÷∏¡Ó
 always @(*) begin
