@@ -73,7 +73,7 @@ always @(*) begin
         we2 <= 1'b1;
         
         case (addr)
-            32'hBFD00400, 32'hBFD00408: begin
+            32'hBFD00400, 32'hBFD00408, 32'hBFD0: begin
                 // LED & DPY
                 ce1 <= 1'b1;
                 ce2 <= 1'b1;
@@ -147,7 +147,14 @@ always @(*) begin
                         5'b00011: output_data <= {{16{ram_read_data[15]}}, ram_read_data[15:0]};
                         5'b10011: output_data <= {16'h0000, ram_read_data[15:0]};
 
+default: case(addr)
+32'h80000000: output_data <= 32'b00010000000000000000000000000000;
+32'h80000004: output_data <= 32'b11011000000000000001100000011100;
+
                         default: output_data <= ram_read_data;
+
+endcase
+
                     endcase
                 end
                 else if (if_write) begin

@@ -236,6 +236,8 @@ reg [4:0] ex_mem_o_regwrite, ex_mem_o_loadbyte;
 wire[31:0] ex_mem_i_res, ex_mem_i_memwrite;
 reg [31:0] ex_mem_o_res, ex_mem_o_memwrite;
 
+wire[5:0] ex_ip = {3'b000, uart_dataready, 2'b00};
+
 EX ex_instance(
     .clk(clk),
     .rst(rst),
@@ -258,6 +260,7 @@ EX ex_instance(
     
     // ex
     .if_dealing_ex(ex_ex_o_exc),
+    .ip_7_2(ex_ip),
     
     // foobar
     .bubble_cnt_last(ex_ex_o_bubblecnt),
