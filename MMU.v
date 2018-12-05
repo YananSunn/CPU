@@ -56,7 +56,7 @@ assign base_ram_addr = addr[21:2];
 assign ext_ram_addr  = addr[21:2];
 
 assign base_ram_data = if_write ? ram_write_data : 32'bz;
-assign ext_ram_data  = if_write ? ram_write_data : 32'bz;
+//assign ext_ram_data  = if_write ? ram_write_data : 32'bz;
 
 assign base_ram_ce_n = ce1;
 assign base_ram_oe_n = oe1;
@@ -116,7 +116,7 @@ always @(*) begin
                     output_data <= {30'b0, uart_dataready, uart_tbre & uart_tsre};
                 end
             end
-            /*
+            
             16'h3008: begin
                 // read pic
                 rdn <= 1'b1;
@@ -125,7 +125,7 @@ always @(*) begin
                 oe2 <= 1'b0;
                 output_data <= ram_read_data;
             end
-            */
+            
             16'h400C: begin
                 rdn <= 1'b1;
                 wrn <= 1'b1;
@@ -207,8 +207,9 @@ always @(*) begin
         ram_write_data <= 32'h00000000;
     end
 end
-/*
+
 wire[8:0] vga_scanning;
+reg[31:0] char_cur_pos;
 reg [8:0] pic_loadrate;
 reg pic_mode = 1'b0;
 parameter full_size = 3840000;
@@ -221,7 +222,8 @@ reg [31:0] now_loading_pic;
 wire[31:0] pic_addr = now_loading_pic + pic_loadp;
 reg [5:0] i;
 
-// assign ext_ram_addr = pic_mode ? pic_addr[21:2] : addr[21:2];
+assign ext_ram_addr = pic_mode ? pic_addr[21:2] : addr[21:2];
+wire vga_rst = ~pic_mode;
 
 always@(*) begin
     if (pic_mode && addr == 32'hBFD03008 && if_read) begin
@@ -237,7 +239,7 @@ always@(*) begin
         end
     end
 end
-*/
+
 always@(posedge clk) begin
     if (if_write) begin
         case (addr)
@@ -251,32 +253,38 @@ always@(posedge clk) begin
             32'hBFD02004: begin
                 pic_mode <= 1'b0;
             end
-            
+            */
             32'hBFD03000: begin
                 pic_mode <= 1'b1;
                 now_loading_pic <= input_data;
+                pic_loadrate <= 9'b0;
+                
             end
             32'hBFD03004: begin
                 pic_mode <= 1'b0;
             end
-            */
+            
         endcase
     end
 end
 
-/*
 vga #(12, 800, 856, 976, 1040, 600, 637, 643, 666, 1, 1) vga800x600at75 (
     .clk(clk),
     .enable(1'b1),
-    .signal_input(signal_input),
-    .char_pos(char_pos),
+    .signal_input({chr_signal_input1, chr_signal_input2}),
+    .char_pos(char_cur_pos),
     .video_red(video_red),
     .video_green(video_green),
     .video_blue(video_blue),
     .video_hsync(video_hsync),
     .video_vsync(video_vsync),
     .video_clk(video_clk),
-    .video_de(video_de)
+    .video_de(video_de),
+    
+    .reset(vga_rst),
+    .img_enable(pic_mode),
+    .img_signal_input(img_signal_input),
+    .v_data_part(vga_scanning)
 );
-*/
+
 endmodule

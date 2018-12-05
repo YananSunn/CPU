@@ -5,7 +5,7 @@ module vga
 (
     input wire clk,
     input wire enable,
-    input wire[19199:0] signal_input,
+    input wire[127:0] signal_input,
     input wire[31:0] char_pos,
     output wire[2:0] video_red,    
     output wire[2:0] video_green,  
@@ -13,10 +13,16 @@ module vga
     output wire video_hsync,       
     output wire video_vsync,       
     output wire video_clk,         
-    output wire video_de           
+    output wire video_de,
+
+    input wire reset,
+	input wire img_enable,
+    input wire[511:0] img_signal_input,	
+	output wire[8:0] v_data_part
 );
-    reg [11:0] hdata;
-    reg [11:0] vdata;
+    reg [10:0] hdata;
+    reg [10:0] vdata;
+    wire [8:0] offset;
     reg [6:0] flag;
     reg [6:0] hpos;
     reg [6:0] vpos;
@@ -31,15 +37,15 @@ module vga
     reg[2:0] videogreen; 
     reg[1:0] videoblue;  
     wire[7:0] char_index;
-    assign char_index[0] = signal_input[vpos * 640 + hpos * 8];
-    assign char_index[1] = signal_input[vpos * 640 + hpos * 8 + 1];
-    assign char_index[2] = signal_input[vpos * 640 + hpos * 8 + 2];
-    assign char_index[3] = signal_input[vpos * 640 + hpos * 8 + 3];
-    assign char_index[4] = signal_input[vpos * 640 + hpos * 8 + 4];
-    assign char_index[5] = signal_input[vpos * 640 + hpos * 8 + 5];
-    assign char_index[6] = signal_input[vpos * 640 + hpos * 8 + 6];
-    assign char_index[7] = signal_input[vpos * 640 + hpos * 8 + 7];
-
+    assign char_index[0] = vpos<3 ? signal_input[vpos * 64 + hpos * 8] : 1;
+    assign char_index[1] = vpos<3 ? signal_input[vpos * 64 + hpos * 8 + 1] : 1;
+    assign char_index[2] = vpos<3 ? signal_input[vpos * 64 + hpos * 8 + 2] : 1;
+    assign char_index[3] = vpos<3 ? signal_input[vpos * 64 + hpos * 8 + 3] : 1;
+    assign char_index[4] = vpos<3 ? signal_input[vpos * 64 + hpos * 8 + 4] : 1;
+    assign char_index[5] = vpos<3 ? signal_input[vpos * 64 + hpos * 8 + 5] : 1;
+    assign char_index[6] = vpos<3 ? signal_input[vpos * 64 + hpos * 8 + 6] : 1;
+    assign char_index[7] = vpos<3 ? signal_input[vpos * 64 + hpos * 8 + 7] : 1;
+    assign offset = vdata * 6400 + hdata * 8;
     always @(posedge clk) begin
         if(enable)begin
             if(vof_flag || hof_flag)begin
@@ -237,10 +243,27 @@ module vga
 							character <= 200'b11111111111111100011111100111111100111111110011111111001111111100111111110011111110011111111100111111110011111111001111111100111111110011111111100111111111000111111111111111111111111111111111111111111 ;
 					8'b01111110:
 							character <= 200'b11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111100011101100100100110111000111111111111111111111111111111111111111111 ;
+					8'b11111111:begin
+						if(vpos == 9)begin
+							case (hpos)
+								7'b0000101:
+									character <= 200'b11111111111111111111111111111111111111111000000001100000000111111100011111100011111100011111100011111100011111100011111110011111111000110001110000001111100001111111111111111111111111111111111111111111 ;
+								7'b0000110:
+									character <= 200'b11111111111111111111111111111111111111111110000111110000001110001100011001111001100111100110010010011001001001100111100110011110011000110001110000001111100001111111111111111111111111111111111111111111 ;
+								7'b0000111:
+									character <= 200'b11111111111111111111111111111111111111111110000111110000001110001100011001111111100011111111000011111110001111110011111110011111111000110001110000001111100001111111111111111111111111111111111111111111 ;
+								default:
+									character <= 200'b00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 ;
+							endcase
+						end
+						else begin
+							character <= 200'b00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 ;
+						end
+					end
 					default:
 						character <= 200'b11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111 ;
                 endcase
-                if((hpos == char_pos[22:16]) && (vpos == char_pos[6:0]) && (hcount < 3))begin
+                if((vpos == char_pos[22:16]) && (hpos == char_pos[6:0]) && (hcount < 3))begin
                     if(character[vcount*10+hcount] == 1)begin
                         videored <= 3'b000;
                         videogreen <= 3'b000;
@@ -265,6 +288,11 @@ module vga
                     end
                 end
             end
+        end
+		else if(img_enable)begin
+            videored <= {img_signal_input[offset + 7],img_signal_input[offset + 6],img_signal_input[offset + 5]};
+            videogreen <= {img_signal_input[offset + 4],img_signal_input[offset + 3],img_signal_input[offset + 2]};
+            videoblue <= {img_signal_input[offset + 1],img_signal_input[offset]};
         end
     end
 
@@ -279,59 +307,73 @@ module vga
     end
 
     // hdata
-    always @ (posedge clk)
+    always @ (posedge clk or posedge reset)
     begin
-        if (hdata >= (HMAX - 1))begin
-            hdata <= 0;
+		if(reset)begin
+			hdata <= 0;
+            hpos <= 0;
+            hcount <= 0;
         end
         else begin
-            hdata <= hdata + 1;
-        end
-        if(hdata < 800)begin
-            hof_flag <= 0;
-            if (hcount >= 9) begin
-                hcount <= 0;
-                if (hpos >= 79)
-                    hpos <= 0;
-                else
-                    hpos <= hpos + 1;
-            end
-            else begin
-                hcount <= hcount+1;
-            end
-        end
-        else begin
-            hof_flag <= 1;
-        end
+			if (hdata >= (HMAX - 1))begin
+				hdata <= 0;
+			end
+			else begin
+				hdata <= hdata + 1;
+			end
+			if((hdata > 359) && (hdata < 440))begin
+				hof_flag <= 0;
+				if (hcount >= 9) begin
+					hcount <= 0;
+					if (hpos >= 8)
+						hpos <= 0;
+					else
+						hpos <= hpos + 1;
+				end
+				else begin
+					hcount <= hcount+1;
+				end
+			end
+			else begin
+				hof_flag <= 1;
+			end
+		end
     end
 
     // vdata
     always @ (posedge clk)
     begin
-        if (hdata >= (HMAX - 1)) 
-        begin
-            if (vdata >= (VMAX - 1))begin
-                vdata <= 0;
-            end
-            else begin
-                vdata <= vdata + 1;
-            end
-
-            if(vdata < 600)begin
-                vof_flag <= 0;
-                if (vcount >= 19) begin
-                    vcount <= 0;
-                    if (vpos >= 29)
-                        vpos <= 0;
-                    else
-                        vpos <= vpos + 1;
+        if(reset)begin
+            vdata <= 0;
+            vpos <= 0;
+            vcount <= 0;
+        end
+        else begin
+            if (hdata >= (HMAX - 1)) 
+            begin
+                if (vdata >= (VMAX - 1))begin
+                    vdata <= 0;
                 end
                 else begin
-                    vcount <= vcount+1;
+                    vdata <= vdata + 1;
                 end
-            end
-            else begin
-                vof_flag <= 1;
+
+                if((vdata > 199) && (vdata < 400))begin
+                    vof_flag <= 0;
+                    if (vcount >= 19) begin
+                        vcount <= 0;
+                        if (vpos >= 9)
+                            vpos <= 0;
+                        else
+                            vpos <= vpos + 1;
+                    end
+                    else begin
+                        vcount <= vcount+1;
+                    end
+                end
+                else begin
+                    vof_flag <= 1;
+                end
             end
         end
     end
@@ -343,5 +385,7 @@ module vga
     assign video_red    = videored;
     assign video_green  = videogreen;
     assign video_blue   = videoblue;
+	
+	assign v_data_part       = offset;
 
 endmodule
