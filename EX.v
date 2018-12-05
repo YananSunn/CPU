@@ -44,7 +44,7 @@ module EX(
     output reg[4:0] data_write_reg_o
     
     );
-/*
+
 wire[3:0] ffclo[0:31];
 assign ffclo[0] = 0; assign ffclo[1] = 0; assign ffclo[2] = 0; assign ffclo[3] = 0;
 assign ffclo[4] = 0; assign ffclo[5] = 0; assign ffclo[6] = 0; assign ffclo[7] = 0;
@@ -56,7 +56,7 @@ assign ffclz[0] = 4; assign ffclz[1] = 3; assign ffclz[2] = 2; assign ffclz[3] =
 assign ffclz[4] = 1; assign ffclz[5] = 1; assign ffclz[6] = 1; assign ffclz[7] = 1;
 assign ffclz[8] = 0; assign ffclz[9] = 0; assign ffclz[10] = 0; assign ffclz[11] = 0;
 assign ffclz[12] = 0; assign ffclz[13] = 0; assign ffclz[14] = 0; assign ffclz[15] = 0;
-*/
+
 reg[2:0] bubble_cnt_dec, ex_stopcnt_dec;
 
 reg last_ds, if_b_njump;
@@ -84,6 +84,8 @@ wire[32:0] ext_add = ext_data_a + ext_data_b;
 wire[32:0] ext_sub = ext_data_a - ext_data_b;
 wire[32:0] ext_addsimm = ext_data_a + ext_simm;
 
+reg intq;
+
 always @(*) begin
     // passes
     if_reg_write_o <= ex_stop ? 1'b0 : if_reg_write_i;
@@ -106,7 +108,16 @@ always @(*) begin
     bad_addr <= 32'h00000000;
     
     // ALU
-    case (op)
+    if (intq) begin
+        ex_cause <= 5'd0;
+        bubble_cnt <= bubble_cnt_dec;
+        ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b010;
+        if_forward_reg_write <= 1'b0;
+        if_pc_jump <= ~ex_stop;
+        exception <= ~ex_stop;
+        pc_jumpto <= EX_ADDR_INIT;
+    end
+    else case (op)
     6'b000000: begin
         // SPECIAL
         case (func)
@@ -357,7 +368,7 @@ always @(*) begin
         default: `RI_EXC
         endcase
     end
-    /*
+    
     6'b011100: begin
     // SPECIAL2
         case (func)
@@ -365,17 +376,17 @@ always @(*) begin
         6'b100000: if (jpc[10:6] != 5'b00000) `RI_EXC else begin
         // CLZ
             result <= ((data_a[31:16] == 16'h0000)
-                ? (5'd16 + (data_a[15:8] == 8'h00)
+                ? (5'd16 + ((data_a[15:8] == 8'h00)
                     ? (4'd8 + (data_a[7:4] == 4'h0)
                         ? 3'd4 + ffclz[data_a[3:0]]
                         : ffclz[data_a[7:4]])
                     : ((data_a[15:12] == 4'h0)
                         ? 3'd4 + ffclz[data_a[11:8]]
-                        : ffclz[data_a[15:12]]))
+                        : ffclz[data_a[15:12]])))
                 : ((data_a[31:24] == 8'h00)
-                    ? (4'd8 + (data_a[23:20] == 4'h0)
+                    ? (4'd8 + ((data_a[23:20] == 4'h0)
                         ? 3'd4 + ffclz[data_a[19:16]]
-                        : ffclz[data_a[23:20]])
+                        : ffclz[data_a[23:20]]))
                     : ((data_a[31:28] == 4'h0)
                         ? 3'd4 + ffclz[data_a[27:24]]
                         : ffclz[data_a[31:28]])));
@@ -388,19 +399,19 @@ always @(*) begin
         6'b100001: if (jpc[10:6] != 5'b00000) `RI_EXC else begin
         // CLO
             result <= ((data_a[31:16] == 16'hFFFF)
-                ? (16 + (data_a[15:8] == 8'hFF)
-                    ? (8 + (data_a[7:4] == 4'hF)
-                        ? 4 + ffclo[data_a[3:0]]
+                ? (5'd16 + ((data_a[15:8] == 8'hFF)
+                    ? (4'd8 + (data_a[7:4] == 4'hF)
+                        ? 3'd4 + ffclo[data_a[3:0]]
                         : ffclo[data_a[7:4]])
                     : ((data_a[15:12] == 4'hF)
-                        ? 4 + ffclo[data_a[11:8]]
-                        : ffclo[data_a[15:12]]))
+                        ? 3'd4 + ffclo[data_a[11:8]]
+                        : ffclo[data_a[15:12]])))
                 : ((data_a[31:24] == 8'hFF)
-                    ? (8 + (data_a[23:20] == 4'hF)
-                        ? 4 + ffclo[data_a[19:16]]
-                        : ffclo[data_a[23:20]])
+                    ? (4'd8 + ((data_a[23:20] == 4'hF)
+                        ? 3'd4 + ffclo[data_a[19:16]]
+                        : ffclo[data_a[23:20]]))
                     : ((data_a[31:28] == 4'hF)
-                        ? 4 + ffclo[data_a[27:24]]
+                        ? 3'd4 + ffclo[data_a[27:24]]
                         : ffclo[data_a[31:28]])));
             bubble_cnt <= bubble_cnt_dec;
             ex_stopcnt <= ex_stopcnt_dec;
@@ -411,7 +422,7 @@ always @(*) begin
         default: `RI_EXC
         endcase
     end
-    */
+    
     6'b010000: begin
         // COP0
         case (jpc[25:21])
@@ -705,8 +716,8 @@ always @(*) begin
             sl_addr[1] & sl_addr[0], sl_addr[1] & ~sl_addr[0],
             ~sl_addr[1] & sl_addr[0], ~sl_addr[1] & ~sl_addr[0]};
         result <= sl_addr;
-        bubble_cnt <= ex_stop ? bubble_cnt_dec : 3'b001; // IF/ID/EX stop
-        ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b001; // R/W conflict
+        bubble_cnt <= ex_stop ? bubble_cnt_dec : (sl_addr == 32'hBFD003F8 ? 3'b111 : 3'b001); // IF/ID/EX stop
+        ex_stopcnt <= ex_stop ? ex_stopcnt_dec : (sl_addr == 32'hBFD003F8 ? 3'b111 : 3'b001); // R/W conflict
         if_pc_jump <= 1'b0;
         if_forward_reg_write <= 1'b0;
     end
@@ -776,6 +787,14 @@ always @(*) begin
 end
 
 always@(posedge clk or negedge rst) begin
+    if (ip_7_2[2] == 1'b1) begin    // IP4 = 1
+        intq <= cp0[STATUS][0] == 1 // IE = 1
+            && cp0[STATUS][12] == 1 // IM4 = 1
+            && cp0[STATUS][1] == 0; // EXL = normal
+    end 
+    else begin
+        intq <= 0;
+    end
     if (!rst) begin
         hi <= 32'b0;
         lo <= 32'b0;
@@ -791,8 +810,8 @@ always@(posedge clk or negedge rst) begin
         cp0[9] <= 32'b0;
         cp0[10] <= 32'b0;
         cp0[11] <= 32'b0;
-        cp0[12] <= 32'h0000FA01; // status
-        cp0[13] <= 32'b0; // cause
+        cp0[12] <= 32'b0; // status
+        cp0[13] <= 32'h00000001; // cause
         cp0[14] <= 32'b0; // epc
         cp0[15] <= 32'h80001000; // ebase
         cp0[16] <= 32'b0;

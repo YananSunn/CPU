@@ -332,7 +332,8 @@ MEM mem_instance(
 // KB-SIM
 reg kb_keydown;
 wire kb_keyget;
-reg[7:0] kb_key = 7'b0, kb_key_src = 7'b0;
+reg[6:0] kb_key_r = 7'b0, kb_key_src = 7'b0;
+wire[7:0] kb_key = {1'b0, kb_key_r};
 always @(posedge clk_50M or posedge kb_keyget) begin
     kb_key_src <= kb_key_src + 7'b1;
     if (kb_keyget) begin
@@ -340,7 +341,7 @@ always @(posedge clk_50M or posedge kb_keyget) begin
     end
     else if (touch_btn[3]) begin
         kb_keydown <= 1'b1;
-        kb_key <= kb_key_src;
+        kb_key_r <= kb_key_src;
     end
 end
 

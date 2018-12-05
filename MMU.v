@@ -76,8 +76,6 @@ reg[7:0] dpys = 8'h00;
 assign debug_leds   = leds;
 assign debug_dpys   = dpys;
 
-reg now_loading_pic;
-
 wire[31:0] ram_read_data = addr[22] ? ext_ram_data : base_ram_data;
 
 always @(*) begin
@@ -102,24 +100,42 @@ always @(*) begin
             16'h03F8: begin
                 if (if_read) begin
                     rdn <= 1'b0;
+                    wrn <= 1'b1;
                     output_data <= {24'b0, base_ram_data[7:0]};
                 end
                 else if (if_write) begin
+                    rdn <= 1'b1;
                     wrn <= 1'b0;
                     ram_write_data <= input_data;
                 end
             end
             16'h03FC: begin
+                rdn <= 1'b1;
+                wrn <= 1'b1;
                 if (if_read) begin
-                    output_data <= {30'b0, uart_dataready, uart_tsre};
+                    output_data <= {30'b0, uart_dataready, uart_tbre & uart_tsre};
                 end
             end
+            /*
+            16'h3008: begin
+                // read pic
+                rdn <= 1'b1;
+                wrn <= 1'b1;
+                ce2 <= 1'b0;
+                oe2 <= 1'b0;
+                output_data <= ram_read_data;
+            end
+            */
             16'h400C: begin
+                rdn <= 1'b1;
+                wrn <= 1'b1;
                 if (if_read) begin
                     output_data <= {31'b0, key_down};
                 end
             end
             16'h4008: begin
+                rdn <= 1'b1;
+                wrn <= 1'b1;
                 if (if_read) begin
                     output_data <= {24'b0, spec_key};
                     key_get <= 1'b1;
@@ -191,44 +207,64 @@ always @(*) begin
         ram_write_data <= 32'h00000000;
     end
 end
-
-reg [19199:0] signal_input;
-wire[4:0] s_x = addr[11:7];
-wire[6:0] s_y = addr[6:0];
-
-reg [31:0] char_pos = 32'h00000000;
+/*
+wire[8:0] vga_scanning;
+reg [8:0] pic_loadrate;
 reg pic_mode = 1'b0;
+parameter full_size = 3840000;
+integer pic_loadp = 0;
+reg [511:0] img_signal_input;
+reg [63:0] chr_signal_input1;
+reg [63:0] chr_signal_input2;
+wire[8:0] load_diff = vga_scanning[8:3] - pic_loadrate[8:3] - 6'd2;
+reg [31:0] now_loading_pic;
+wire[31:0] pic_addr = now_loading_pic + pic_loadp;
+reg [5:0] i;
 
-always@ (posedge clk) begin
+// assign ext_ram_addr = pic_mode ? pic_addr[21:2] : addr[21:2];
+
+always@(*) begin
+    if (pic_mode && addr == 32'hBFD03008 && if_read) begin
+        if (load_diff[8] == 1'b0) begin
+            for (i=0;i<32;i=i+1) begin
+                img_signal_input[pic_loadrate + i] <= output_data[i];
+            end
+            pic_loadrate <= pic_loadrate + 9'd32;
+            if (pic_loadp + 4 == full_size)
+                pic_loadp <= 0;
+            else
+                pic_loadp <= pic_loadp + 4;
+        end
+    end
+end
+*/
+always@(posedge clk) begin
     if (if_write) begin
         case (addr)
             32'hBFD00400: leds <= input_data[15:0];
             32'hBFD00408: dpys <= input_data[7:0];
+            /*
+            32'hBFD02000: begin
+                pic_mode <= 1'b0;
+                now_loading_pic <= input_data;
+            end
+            32'hBFD02004: begin
+                pic_mode <= 1'b0;
+            end
+            
             32'hBFD03000: begin
                 pic_mode <= 1'b1;
-                now_loading_pic = input_data[0];
+                now_loading_pic <= input_data;
             end
-        endcase
-        case (addr[31:12])
-            20'hBFD01: begin
-                signal_input[s_x * 640 + s_y * 8] <= input_data[0];
-                signal_input[s_x * 640 + s_y * 8 + 1] <= input_data[1];
-                signal_input[s_x * 640 + s_y * 8 + 2] <= input_data[2];
-                signal_input[s_x * 640 + s_y * 8 + 3] <= input_data[3];
-                signal_input[s_x * 640 + s_y * 8 + 4] <= input_data[4];
-                signal_input[s_x * 640 + s_y * 8 + 5] <= input_data[5];
-                signal_input[s_x * 640 + s_y * 8 + 6] <= input_data[6];
-                signal_input[s_x * 640 + s_y * 8 + 7] <= input_data[7];
-            end
-            20'hBFD02: begin
-                char_pos = {11'b0, s_y, 9'b0, s_x};
+            32'hBFD03004: begin
                 pic_mode <= 1'b0;
-                now_loading_pic = 1'b0;
             end
+            */
         endcase
     end
 end
 
+/*
 vga #(12, 800, 856, 976, 1040, 600, 637, 643, 666, 1, 1) vga800x600at75 (
     .clk(clk),
     .enable(1'b1),
@@ -242,5 +278,5 @@ vga #(12, 800, 856, 976, 1040, 600, 637, 643, 666, 1, 1) vga800x600at75 (
     .video_clk(video_clk),
     .video_de(video_de)
 );
-
+*/
 endmodule

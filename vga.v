@@ -39,6 +39,7 @@ module vga
     assign char_index[5] = signal_input[vpos * 640 + hpos * 8 + 5];
     assign char_index[6] = signal_input[vpos * 640 + hpos * 8 + 6];
     assign char_index[7] = signal_input[vpos * 640 + hpos * 8 + 7];
+
     always @(posedge clk) begin
         if(enable)begin
             if(vof_flag || hof_flag)begin
