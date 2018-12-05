@@ -329,6 +329,21 @@ MEM mem_instance(
     .data_write_reg_o(mem_wb_i_regwrite)
 );
 
+// KB-SIM
+reg kb_keydown;
+wire kb_keyget;
+reg[7:0] kb_key = 7'b0, kb_key_src = 7'b0;
+always @(posedge clk_50M or posedge kb_keyget) begin
+    kb_key_src <= kb_key_src + 7'b1;
+    if (kb_keyget) begin
+        kb_keydown <= 1'b0;
+    end
+    else if (touch_btn[3]) begin
+        kb_keydown <= 1'b1;
+        kb_key <= kb_key_src;
+    end
+end
+
 // MMU MUX
 wire mmu_ifmem = (ex_mem_o_ifmemread | ex_mem_o_ifmemwrite) & ~ex_ex_o_exc;
 wire[4:0] mmu_bytemode = mmu_ifmem ? ex_mem_o_loadbyte : 5'b01111;
@@ -370,6 +385,12 @@ MMU mmu_instance(
     .uart_dataready(uart_dataready),
     .uart_tbre(uart_tbre),
     .uart_tsre(uart_tsre),
+    
+    // kb
+    .key_down(kb_keydown),
+    .spec_key(kb_key),
+    .key_get(kb_keyget),
+    
     // leds & dpy
     .debug_leds(leds),
     .debug_dpys(dpys),

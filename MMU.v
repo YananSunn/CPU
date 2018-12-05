@@ -31,6 +31,11 @@ module MMU(
     output wire[15:0] debug_leds,
     output wire[7:0] debug_dpys,
     
+    // ¼üÅÌ(Î±)
+    input wire key_down,
+    input wire[7:0] spec_key,
+    output reg key_get,
+    
     //Í¼ÏñÊä³öĞÅºÅ
     output wire[2:0] video_red,    //ºìÉ«ÏñËØ£¬3Î»
     output wire[2:0] video_green,  //ÂÌÉ«ÏñËØ£¬3Î»
@@ -71,114 +76,106 @@ reg[7:0] dpys = 8'h00;
 assign debug_leds   = leds;
 assign debug_dpys   = dpys;
 
+reg now_loading_pic;
+
 wire[31:0] ram_read_data = addr[22] ? ext_ram_data : base_ram_data;
 
 always @(*) begin
-
+    key_get <= 0;
+    
     if (!clk) begin
         oe1 <= 1'b1;
         oe2 <= 1'b1;
         we1 <= 1'b1;
         we2 <= 1'b1;
-        
-        case (addr)
-            32'hBFD00400, 32'hBFD00408, 32'hBFD0: begin
-                // LED & DPY
-                ce1 <= 1'b1;
-                ce2 <= 1'b1;
-                rdn <= 1'b1;
-                wrn <= 1'b1;
+        if (addr[31:16] == 16'hBFD0) begin
+            ce1 <= 1'b1;
+            ce2 <= 1'b1;
+            rdn <= 1'b1;
+            wrn <= 1'b1;
+            output_data <= 32'h00000000;
+            ram_write_data <= 32'h00000000;
+            case (addr[15:0])
+            16'h0400, 16'h0408: begin
+                // LED & DPY % vga
+            end
+            16'h03F8: begin
+                if (if_read) begin
+                    rdn <= 1'b0;
+                    output_data <= {24'b0, base_ram_data[7:0]};
+                end
+                else if (if_write) begin
+                    wrn <= 1'b0;
+                    ram_write_data <= input_data;
+                end
+            end
+            16'h03FC: begin
+                if (if_read) begin
+                    output_data <= {30'b0, uart_dataready, uart_tsre};
+                end
+            end
+            16'h400C: begin
+                if (if_read) begin
+                    output_data <= {31'b0, key_down};
+                end
+            end
+            16'h4008: begin
+                if (if_read) begin
+                    output_data <= {24'b0, spec_key};
+                    key_get <= 1'b1;
+                end
+            end
+            endcase
+        end
+        else begin
+            ram_write_data <= 32'h00000000;
+            // RAM
+            ce1 <= addr[22];
+            ce2 <= ~addr[22];
+            oe1 <= addr[22] | (~if_read);
+            oe2 <= (~addr[22]) | (~if_read);
+            we1 <= addr[22] | (~if_write);
+            we2 <= (~addr[22]) | (~if_write);
+            rdn <= 1'b1;
+            wrn <= 1'b1;
+            if (if_read) begin
+                case (bytemode)
+                    5'b01000: output_data <= {{24{ram_read_data[31]}}, ram_read_data[31:24]};
+                    5'b11000: output_data <= {24'h000000, ram_read_data[31:24]};
+                    5'b00100: output_data <= {{24{ram_read_data[23]}}, ram_read_data[23:16]};
+                    5'b10100: output_data <= {24'h000000, ram_read_data[23:16]};
+                    5'b00010: output_data <= {{24{ram_read_data[15]}}, ram_read_data[15:8]};
+                    5'b10010: output_data <= {24'h000000, ram_read_data[15:8]};
+                    5'b00001: output_data <= {{24{ram_read_data[7]}}, ram_read_data[7:0]};
+                    5'b10001: output_data <= {24'h000000, ram_read_data[7:0]};
+                    
+                    5'b01100: output_data <= {{16{ram_read_data[31]}}, ram_read_data[31:16]};
+                    5'b11100: output_data <= {16'h0000, ram_read_data[31:16]};
+                    5'b00011: output_data <= {{16{ram_read_data[15]}}, ram_read_data[15:0]};
+                    5'b10011: output_data <= {16'h0000, ram_read_data[15:0]};
+                    
+                    default: output_data <= ram_read_data;
+                endcase
+            end
+            else if (if_write) begin
+                output_data <= 32'h00000000;
+                case (bytemode[3:0])
+                    4'b1000: ram_write_data <= {input_data[7:0], 24'h000000};
+                    4'b0100: ram_write_data <= {8'h00, input_data[7:0], 16'h0000};
+                    4'b0010: ram_write_data <= {16'h0000, input_data[7:0], 8'h00};
+                    4'b0001: ram_write_data <= {24'h000000, input_data[7:0]};
+                    
+                    4'b1100: ram_write_data <= {input_data[15:0], 16'h0000};
+                    4'b0011: ram_write_data <= {16'h0000, input_data[15:0]};
+                    
+                    default: ram_write_data <= input_data;
+                endcase
+            end
+            else begin
                 output_data <= 32'h00000000;
                 ram_write_data <= 32'h00000000;
             end
-            32'hBFD003F8: begin
-                ce1 <= 1'b1;
-                ce2 <= 1'b1;
-                if (if_read) begin
-                    rdn <= 1'b0;
-                    wrn <= 1'b1;
-                    output_data <= {24'b0, base_ram_data[7:0]};
-                    ram_write_data <= 32'h00000000;
-                end
-                else if (if_write) begin
-                    rdn <= 1'b1;
-                    wrn <= 1'b0;
-                    output_data <= 32'h00000000;
-                    ram_write_data <= input_data;
-                end
-                else begin
-                    rdn <= 1'b1;
-                    wrn <= 1'b1;
-                    output_data <= 32'h00000000;
-                    ram_write_data <= 32'h00000000;
-                end
-            end
-            32'hBFD003FC: begin
-                ce1 <= 1'b1;
-                ce2 <= 1'b1;
-                if (if_read) begin
-                    rdn <= 1'b1;
-                    wrn <= 1'b1;
-                    output_data <= {30'b0, uart_dataready, uart_tsre};
-                    ram_write_data <= 32'h00000000;
-                end
-                else begin
-                    rdn <= 1'b1;
-                    wrn <= 1'b1;
-                    output_data <= 32'h00000000;
-                    ram_write_data <= 32'h00000000;
-                end
-            end
-            default: begin
-                ram_write_data <= 32'h00000000;
-                // RAM
-                ce1 <= addr[22];
-                ce2 <= ~addr[22];
-                oe1 <= addr[22] | (~if_read);
-                oe2 <= (~addr[22]) | (~if_read);
-                we1 <= addr[22] | (~if_write);
-                we2 <= (~addr[22]) | (~if_write);
-                rdn <= 1'b1;
-                wrn <= 1'b1;
-                if (if_read) begin
-                    case (bytemode)
-                        5'b01000: output_data <= {{24{ram_read_data[31]}}, ram_read_data[31:24]};
-                        5'b11000: output_data <= {24'h000000, ram_read_data[31:24]};
-                        5'b00100: output_data <= {{24{ram_read_data[23]}}, ram_read_data[23:16]};
-                        5'b10100: output_data <= {24'h000000, ram_read_data[23:16]};
-                        5'b00010: output_data <= {{24{ram_read_data[15]}}, ram_read_data[15:8]};
-                        5'b10010: output_data <= {24'h000000, ram_read_data[15:8]};
-                        5'b00001: output_data <= {{24{ram_read_data[7]}}, ram_read_data[7:0]};
-                        5'b10001: output_data <= {24'h000000, ram_read_data[7:0]};
-                        
-                        5'b01100: output_data <= {{16{ram_read_data[31]}}, ram_read_data[31:16]};
-                        5'b11100: output_data <= {16'h0000, ram_read_data[31:16]};
-                        5'b00011: output_data <= {{16{ram_read_data[15]}}, ram_read_data[15:0]};
-                        5'b10011: output_data <= {16'h0000, ram_read_data[15:0]};
-                        
-                        default: output_data <= ram_read_data;
-                    endcase
-                end
-                else if (if_write) begin
-                    output_data <= 32'h00000000;
-                    case (bytemode[3:0])
-                        4'b1000: ram_write_data <= {input_data[7:0], 24'h000000};
-                        4'b0100: ram_write_data <= {8'h00, input_data[7:0], 16'h0000};
-                        4'b0010: ram_write_data <= {16'h0000, input_data[7:0], 8'h00};
-                        4'b0001: ram_write_data <= {24'h000000, input_data[7:0]};
-                        
-                        4'b1100: ram_write_data <= {input_data[15:0], 16'h0000};
-                        4'b0011: ram_write_data <= {16'h0000, input_data[15:0]};
-                        
-                        default: ram_write_data <= input_data;
-                    endcase
-                end
-                else begin
-                    output_data <= 32'h00000000;
-                    ram_write_data <= 32'h00000000;
-                end
-            end
-        endcase
+        end
     end
     else begin
         // ram
@@ -200,13 +197,20 @@ wire[4:0] s_x = addr[11:7];
 wire[6:0] s_y = addr[6:0];
 
 reg [31:0] char_pos = 32'h00000000;
+reg pic_mode = 1'b0;
 
 always@ (posedge clk) begin
     if (if_write) begin
         case (addr)
             32'hBFD00400: leds <= input_data[15:0];
             32'hBFD00408: dpys <= input_data[7:0];
-            32'hBFD01xxx: begin
+            32'hBFD03000: begin
+                pic_mode <= 1'b1;
+                now_loading_pic = input_data[0];
+            end
+        endcase
+        case (addr[31:12])
+            20'hBFD01: begin
                 signal_input[s_x * 640 + s_y * 8] <= input_data[0];
                 signal_input[s_x * 640 + s_y * 8 + 1] <= input_data[1];
                 signal_input[s_x * 640 + s_y * 8 + 2] <= input_data[2];
@@ -216,7 +220,11 @@ always@ (posedge clk) begin
                 signal_input[s_x * 640 + s_y * 8 + 6] <= input_data[6];
                 signal_input[s_x * 640 + s_y * 8 + 7] <= input_data[7];
             end
-            32'hBFD02xxx: char_pos = {11'b0, s_y, 9'b0, s_x};
+            20'hBFD02: begin
+                char_pos = {11'b0, s_y, 9'b0, s_x};
+                pic_mode <= 1'b0;
+                now_loading_pic = 1'b0;
+            end
         endcase
     end
 end

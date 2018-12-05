@@ -44,7 +44,19 @@ module EX(
     output reg[4:0] data_write_reg_o
     
     );
+/*
+wire[3:0] ffclo[0:31];
+assign ffclo[0] = 0; assign ffclo[1] = 0; assign ffclo[2] = 0; assign ffclo[3] = 0;
+assign ffclo[4] = 0; assign ffclo[5] = 0; assign ffclo[6] = 0; assign ffclo[7] = 0;
+assign ffclo[8] = 1; assign ffclo[9] = 1; assign ffclo[10] = 1; assign ffclo[11] = 1;
+assign ffclo[12] = 2; assign ffclo[13] = 2; assign ffclo[14] = 3; assign ffclo[15] = 4;
 
+wire[3:0] ffclz[0:31];
+assign ffclz[0] = 4; assign ffclz[1] = 3; assign ffclz[2] = 2; assign ffclz[3] = 2;
+assign ffclz[4] = 1; assign ffclz[5] = 1; assign ffclz[6] = 1; assign ffclz[7] = 1;
+assign ffclz[8] = 0; assign ffclz[9] = 0; assign ffclz[10] = 0; assign ffclz[11] = 0;
+assign ffclz[12] = 0; assign ffclz[13] = 0; assign ffclz[14] = 0; assign ffclz[15] = 0;
+*/
 reg[2:0] bubble_cnt_dec, ex_stopcnt_dec;
 
 reg last_ds, if_b_njump;
@@ -345,48 +357,28 @@ always @(*) begin
         default: `RI_EXC
         endcase
     end
-    
+    /*
     6'b011100: begin
     // SPECIAL2
         case (func)
         
         6'b100000: if (jpc[10:6] != 5'b00000) `RI_EXC else begin
         // CLZ
-            case (data_a)
-            32'b1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx: result <= 32'd0;
-            32'b01xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx: result <= 32'd1;
-            32'b001xxxxxxxxxxxxxxxxxxxxxxxxxxxxx: result <= 32'd2;
-            32'b0001xxxxxxxxxxxxxxxxxxxxxxxxxxxx: result <= 32'd3;
-            32'b00001xxxxxxxxxxxxxxxxxxxxxxxxxxx: result <= 32'd4;
-            32'b000001xxxxxxxxxxxxxxxxxxxxxxxxxx: result <= 32'd5;
-            32'b0000001xxxxxxxxxxxxxxxxxxxxxxxxx: result <= 32'd6;
-            32'b00000001xxxxxxxxxxxxxxxxxxxxxxxx: result <= 32'd7;
-            32'b000000001xxxxxxxxxxxxxxxxxxxxxxx: result <= 32'd8;
-            32'b0000000001xxxxxxxxxxxxxxxxxxxxxx: result <= 32'd9;
-            32'b00000000001xxxxxxxxxxxxxxxxxxxxx: result <= 32'd10;
-            32'b000000000001xxxxxxxxxxxxxxxxxxxx: result <= 32'd11;
-            32'b0000000000001xxxxxxxxxxxxxxxxxxx: result <= 32'd12;
-            32'b00000000000001xxxxxxxxxxxxxxxxxx: result <= 32'd13;
-            32'b000000000000001xxxxxxxxxxxxxxxxx: result <= 32'd14;
-            32'b0000000000000001xxxxxxxxxxxxxxxx: result <= 32'd15;
-            32'b00000000000000001xxxxxxxxxxxxxxx: result <= 32'd16;
-            32'b000000000000000001xxxxxxxxxxxxxx: result <= 32'd17;
-            32'b0000000000000000001xxxxxxxxxxxxx: result <= 32'd18;
-            32'b00000000000000000001xxxxxxxxxxxx: result <= 32'd19;
-            32'b000000000000000000001xxxxxxxxxxx: result <= 32'd20;
-            32'b0000000000000000000001xxxxxxxxxx: result <= 32'd21;
-            32'b00000000000000000000001xxxxxxxxx: result <= 32'd22;
-            32'b000000000000000000000001xxxxxxxx: result <= 32'd23;
-            32'b0000000000000000000000001xxxxxxx: result <= 32'd24;
-            32'b00000000000000000000000001xxxxxx: result <= 32'd25;
-            32'b000000000000000000000000001xxxxx: result <= 32'd26;
-            32'b0000000000000000000000000001xxxx: result <= 32'd27;
-            32'b00000000000000000000000000001xxx: result <= 32'd28;
-            32'b000000000000000000000000000001xx: result <= 32'd29;
-            32'b0000000000000000000000000000001x: result <= 32'd30;
-            32'b00000000000000000000000000000001: result <= 32'd31;
-            default: result <= 32'd32;
-            endcase
+            result <= ((data_a[31:16] == 16'h0000)
+                ? (5'd16 + (data_a[15:8] == 8'h00)
+                    ? (4'd8 + (data_a[7:4] == 4'h0)
+                        ? 3'd4 + ffclz[data_a[3:0]]
+                        : ffclz[data_a[7:4]])
+                    : ((data_a[15:12] == 4'h0)
+                        ? 3'd4 + ffclz[data_a[11:8]]
+                        : ffclz[data_a[15:12]]))
+                : ((data_a[31:24] == 8'h00)
+                    ? (4'd8 + (data_a[23:20] == 4'h0)
+                        ? 3'd4 + ffclz[data_a[19:16]]
+                        : ffclz[data_a[23:20]])
+                    : ((data_a[31:28] == 4'h0)
+                        ? 3'd4 + ffclz[data_a[27:24]]
+                        : ffclz[data_a[31:28]])));
             bubble_cnt <= bubble_cnt_dec;
             ex_stopcnt <= ex_stopcnt_dec;
             if_forward_reg_write <= ~ex_stop;
@@ -395,41 +387,21 @@ always @(*) begin
         
         6'b100001: if (jpc[10:6] != 5'b00000) `RI_EXC else begin
         // CLO
-            case (data_a)
-            32'b0xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx: result <= 32'd0;
-            32'b10xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx: result <= 32'd1;
-            32'b110xxxxxxxxxxxxxxxxxxxxxxxxxxxxx: result <= 32'd2;
-            32'b1110xxxxxxxxxxxxxxxxxxxxxxxxxxxx: result <= 32'd3;
-            32'b11110xxxxxxxxxxxxxxxxxxxxxxxxxxx: result <= 32'd4;
-            32'b111110xxxxxxxxxxxxxxxxxxxxxxxxxx: result <= 32'd5;
-            32'b1111110xxxxxxxxxxxxxxxxxxxxxxxxx: result <= 32'd6;
-            32'b11111110xxxxxxxxxxxxxxxxxxxxxxxx: result <= 32'd7;
-            32'b111111110xxxxxxxxxxxxxxxxxxxxxxx: result <= 32'd8;
-            32'b1111111110xxxxxxxxxxxxxxxxxxxxxx: result <= 32'd9;
-            32'b11111111110xxxxxxxxxxxxxxxxxxxxx: result <= 32'd10;
-            32'b111111111110xxxxxxxxxxxxxxxxxxxx: result <= 32'd11;
-            32'b1111111111110xxxxxxxxxxxxxxxxxxx: result <= 32'd12;
-            32'b11111111111110xxxxxxxxxxxxxxxxxx: result <= 32'd13;
-            32'b111111111111110xxxxxxxxxxxxxxxxx: result <= 32'd14;
-            32'b1111111111111110xxxxxxxxxxxxxxxx: result <= 32'd15;
-            32'b11111111111111110xxxxxxxxxxxxxxx: result <= 32'd16;
-            32'b111111111111111110xxxxxxxxxxxxxx: result <= 32'd17;
-            32'b1111111111111111110xxxxxxxxxxxxx: result <= 32'd18;
-            32'b11111111111111111110xxxxxxxxxxxx: result <= 32'd19;
-            32'b111111111111111111110xxxxxxxxxxx: result <= 32'd20;
-            32'b1111111111111111111110xxxxxxxxxx: result <= 32'd21;
-            32'b11111111111111111111110xxxxxxxxx: result <= 32'd22;
-            32'b111111111111111111111110xxxxxxxx: result <= 32'd23;
-            32'b1111111111111111111111110xxxxxxx: result <= 32'd24;
-            32'b11111111111111111111111110xxxxxx: result <= 32'd25;
-            32'b111111111111111111111111110xxxxx: result <= 32'd26;
-            32'b1111111111111111111111111110xxxx: result <= 32'd27;
-            32'b11111111111111111111111111110xxx: result <= 32'd28;
-            32'b111111111111111111111111111110xx: result <= 32'd29;
-            32'b1111111111111111111111111111110x: result <= 32'd30;
-            32'b11111111111111111111111111111110: result <= 32'd31;
-            default: result <= 32'd32;
-            endcase
+            result <= ((data_a[31:16] == 16'hFFFF)
+                ? (16 + (data_a[15:8] == 8'hFF)
+                    ? (8 + (data_a[7:4] == 4'hF)
+                        ? 4 + ffclo[data_a[3:0]]
+                        : ffclo[data_a[7:4]])
+                    : ((data_a[15:12] == 4'hF)
+                        ? 4 + ffclo[data_a[11:8]]
+                        : ffclo[data_a[15:12]]))
+                : ((data_a[31:24] == 8'hFF)
+                    ? (8 + (data_a[23:20] == 4'hF)
+                        ? 4 + ffclo[data_a[19:16]]
+                        : ffclo[data_a[23:20]])
+                    : ((data_a[31:28] == 4'hF)
+                        ? 4 + ffclo[data_a[27:24]]
+                        : ffclo[data_a[31:28]])));
             bubble_cnt <= bubble_cnt_dec;
             ex_stopcnt <= ex_stopcnt_dec;
             if_forward_reg_write <= ~ex_stop;
@@ -439,7 +411,7 @@ always @(*) begin
         default: `RI_EXC
         endcase
     end
-    
+    */
     6'b010000: begin
         // COP0
         case (jpc[25:21])
@@ -841,8 +813,8 @@ always@(posedge clk or negedge rst) begin
         cp0[31] <= 32'b0;
     end
     else begin
-        cp0[CAUSE][15:10] = ip_7_2;
         if (exception) begin
+            cp0[CAUSE][15:10] = ip_7_2;
             cp0[CAUSE][6:2] <= ex_cause; // cause: ExcCode
             if (cp0[STATUS][1] == 1'b0) begin
                 cp0[CAUSE][31] <= last_ds; // cause:BD
