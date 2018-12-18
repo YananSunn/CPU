@@ -751,8 +751,8 @@ always @(*) begin
             load_byte <= {1'b0, sl_addr[1], sl_addr[1], ~sl_addr[1], ~sl_addr[1]};
             result <= sl_addr;
             mem_data <= data_b; // write mem
-            bubble_cnt <= ex_stop ? bubble_cnt_dec : 3'b001; // IF/ID/EX stop
-            ex_stopcnt <= ex_stop ? ex_stopcnt_dec : 3'b001;
+            bubble_cnt <= ex_stop ? bubble_cnt_dec : (sl_addr == 32'hBFD003F8 ? 3'b111 : 3'b001); // IF/ID/EX stop
+            ex_stopcnt <= ex_stop ? ex_stopcnt_dec : (sl_addr == 32'hBFD003F8 ? 3'b111 : 3'b001); // R/W conflict
             if_pc_jump <= 1'b0;
             if_forward_reg_write <= 1'b0;
         end
